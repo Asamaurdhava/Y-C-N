@@ -1,6 +1,7 @@
 # 🎯 YouTube Channel Notifier - Smart Relationship-Based Notifications
 
 **🏆 Built for GitHub "For The Love of Code" 2025 Hackathon**
+**Category: World Wide Wonders** - A surprisingly useful web extension that reveals your true YouTube relationships
 
 *Built with the sophisticated assistance of Claude Code - where AI-powered development meets human creativity*
 
