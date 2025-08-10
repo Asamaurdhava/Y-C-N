@@ -5,6 +5,50 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('openDashboard').addEventListener('click', () => {
     chrome.tabs.create({ url: chrome.runtime.getURL('dashboard.html') });
   });
+  
+  // Add check button after dashboard button
+  const dashboardBtn = document.getElementById('openDashboard');
+  dashboardBtn.style.marginBottom = '6px'; // Reduce margin
+  
+  const checkButton = document.createElement('button');
+  checkButton.textContent = '🔄 Check for New Videos';
+  checkButton.className = 'dashboard-btn'; // Use same styling
+  checkButton.style.cssText = `
+    width: calc(100% - 32px);
+    margin: 0 16px 8px;
+    padding: 8px;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  `;
+  
+  checkButton.addEventListener('click', async () => {
+    checkButton.textContent = '⏳ Checking...';
+    checkButton.disabled = true;
+    
+    try {
+      await chrome.runtime.sendMessage({ type: 'CHECK_NOW' });
+      checkButton.textContent = '✅ Check Complete';
+      setTimeout(() => {
+        checkButton.textContent = '🔄 Check for New Videos';
+        checkButton.disabled = false;
+      }, 2000);
+    } catch (error) {
+      checkButton.textContent = '❌ Check Failed';
+      setTimeout(() => {
+        checkButton.textContent = '🔄 Check for New Videos';
+        checkButton.disabled = false;
+      }, 2000);
+    }
+  });
+  
+  // Insert after dashboard button
+  dashboardBtn.parentNode.insertBefore(checkButton, dashboardBtn.nextSibling);
 });
 
 async function updateCurrentVideo() {

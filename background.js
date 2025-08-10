@@ -33,15 +33,37 @@ class YCNBackground {
     chrome.runtime.onStartup.addListener(() => {
       console.log('YCN: Service worker started up');
       this.updateActivity();
+      this.setupVideoChecking();
     });
 
     // Handle extension install/enable
     chrome.runtime.onInstalled.addListener(() => {
       console.log('YCN: Extension installed/enabled');
       this.updateActivity();
+      this.setupVideoChecking();
     });
 
+    // Handle alarms for periodic video checking
+    chrome.alarms.onAlarm.addListener((alarm) => {
+      if (alarm.name === 'checkYouTubeVideos') {
+        console.log('YCN: Alarm triggered - checking for new videos');
+        this.checkAllChannelsForNewVideos();
+      }
+    });
+
+    // Initial setup
+    this.setupVideoChecking();
+
     console.log('YCN: Background service worker initialized');
+  }
+
+  async setupVideoChecking() {
+    // Create alarm to check every 30 minutes
+    chrome.alarms.create('checkYouTubeVideos', {
+      periodInMinutes: 30,
+      delayInMinutes: 1 // Start checking 1 minute after setup
+    });
+    console.log('YCN: Video checking alarm set up');
   }
 
   updateActivity() {
@@ -103,6 +125,12 @@ class YCNBackground {
         
         case 'CLEAR_CURRENT_VIDEO':
           await this.clearCurrentVideo(message.channelId);
+          sendResponse({ success: true });
+          break;
+        
+        case 'CHECK_NOW':
+          console.log('YCN: Manual check triggered from popup');
+          await this.checkAllChannelsForNewVideos();
           sendResponse({ success: true });
           break;
         
@@ -394,13 +422,31 @@ class YCNBackground {
   async handleNotificationClick(notificationId) {
     try {
       if (notificationId.startsWith('new_video_')) {
-        const channelId = notificationId.replace('new_video_', '');
-        const result = await chrome.storage.local.get(['channels']);
-        const channels = result.channels || {};
+        // Try to get stored notification info first
+        const notificationInfo = await chrome.storage.local.get([`notification_${notificationId}`]);
         
-        if (channels[channelId] && channels[channelId].lastVideo) {
-          const videoUrl = `https://www.youtube.com/watch?v=${channels[channelId].lastVideo.id}`;
+        if (notificationInfo[`notification_${notificationId}`]) {
+          const { videoId } = notificationInfo[`notification_${notificationId}`];
+          const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
           await chrome.tabs.create({ url: videoUrl });
+          
+          // Clean up stored notification info
+          await chrome.storage.local.remove([`notification_${notificationId}`]);
+        } else {
+          // Fallback to old method for backward compatibility
+          const channelId = notificationId.replace('new_video_', '').split('_')[0];
+          const result = await chrome.storage.local.get(['channels']);
+          const channels = result.channels || {};
+          
+          if (channels[channelId]) {
+            if (channels[channelId].latestVideoId) {
+              const videoUrl = `https://www.youtube.com/watch?v=${channels[channelId].latestVideoId}`;
+              await chrome.tabs.create({ url: videoUrl });
+            } else if (channels[channelId].lastVideo) {
+              const videoUrl = `https://www.youtube.com/watch?v=${channels[channelId].lastVideo.id}`;
+              await chrome.tabs.create({ url: videoUrl });
+            }
+          }
         }
       }
       
@@ -433,21 +479,369 @@ class YCNBackground {
     }
   }
 
-  async sendNewVideoNotification(channelId, channel) {
+  async sendNewVideoNotification(channelId, channel, videoTitle, videoId) {
     try {
-      const notificationId = `new_video_${channelId}`;
+      const notificationId = `new_video_${channelId}_${videoId}`;
       
       await chrome.notifications.create(notificationId, {
         type: 'basic',
         iconUrl: 'icons/icon48.png',
         title: `New video from ${channel.name}`,
-        message: channel.lastVideo.title,
-        silent: false
+        message: videoTitle || channel.lastVideo?.title || 'New video available',
+        silent: false,
+        requireInteraction: false
       });
       
-      console.log('YCN: Sent notification for channel:', channelId);
+      console.log('YCN: Sent notification for channel:', channelId, 'Video:', videoTitle);
+      
+      // Store notification info for click handling
+      await chrome.storage.local.set({
+        [`notification_${notificationId}`]: {
+          channelId,
+          videoId,
+          timestamp: Date.now()
+        }
+      });
     } catch (error) {
       console.warn('YCN: Error sending notification:', error);
+    }
+  }
+
+  decodeXmlEntities(str) {
+    // Decode common XML/HTML entities
+    return str
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&apos;/g, "'")
+      .replace(/&#x([0-9a-fA-F]+);/g, (match, hex) => String.fromCharCode(parseInt(hex, 16)))
+      .replace(/&#(\d+);/g, (match, dec) => String.fromCharCode(parseInt(dec, 10)));
+  }
+
+  async getChannelIdFromHandle(handle) {
+    try {
+      // First check if we already resolved this handle
+      const result = await chrome.storage.local.get(['handleCache']);
+      const handleCache = result.handleCache || {};
+      
+      if (handleCache[handle]) {
+        console.log(`YCN: Using cached channel ID for @${handle}: ${handleCache[handle]}`);
+        return handleCache[handle];
+      }
+      
+      // Fetch the channel page to extract the real channel ID
+      const channelUrl = `https://www.youtube.com/@${handle}`;
+      const response = await fetch(channelUrl);
+      
+      if (!response.ok) {
+        console.warn(`YCN: Failed to fetch channel page for @${handle}:`, response.status);
+        return null;
+      }
+      
+      const html = await response.text();
+      
+      // Look for channel ID in various places
+      // Method 1: Look in meta tags
+      const metaMatch = html.match(/<meta itemprop="channelId" content="([^"]+)"/);
+      if (metaMatch) {
+        const channelId = metaMatch[1];
+        console.log(`YCN: Found channel ID for @${handle}: ${channelId}`);
+        
+        // Cache the result
+        handleCache[handle] = channelId;
+        await chrome.storage.local.set({ handleCache });
+        
+        return channelId;
+      }
+      
+      // Method 2: Look in browse endpoint
+      const browseMatch = html.match(/"browseId":"(UC[a-zA-Z0-9_-]+)"/);
+      if (browseMatch) {
+        const channelId = browseMatch[1];
+        console.log(`YCN: Found channel ID for @${handle}: ${channelId}`);
+        
+        // Cache the result
+        handleCache[handle] = channelId;
+        await chrome.storage.local.set({ handleCache });
+        
+        return channelId;
+      }
+      
+      // Method 3: Look for canonical URL
+      const canonicalMatch = html.match(/<link rel="canonical" href="https:\/\/www\.youtube\.com\/channel\/(UC[a-zA-Z0-9_-]+)"/);
+      if (canonicalMatch) {
+        const channelId = canonicalMatch[1];
+        console.log(`YCN: Found channel ID for @${handle}: ${channelId}`);
+        
+        // Cache the result
+        handleCache[handle] = channelId;
+        await chrome.storage.local.set({ handleCache });
+        
+        return channelId;
+      }
+      
+      console.warn(`YCN: Could not find channel ID for @${handle}`);
+      return null;
+      
+    } catch (error) {
+      console.warn(`YCN: Error resolving handle @${handle}:`, error);
+      return null;
+    }
+  }
+
+  async checkAllChannelsForNewVideos() {
+    try {
+      console.log('YCN: Starting RSS feed check for all approved channels');
+      const result = await chrome.storage.local.get(['channels']);
+      const channels = result.channels || {};
+      
+      for (const [channelId, channel] of Object.entries(channels)) {
+        if (channel.approved) {
+          console.log(`YCN: Checking channel ${channel.name} (${channelId}) for new videos`);
+          await this.checkChannelForNewVideos(channelId, channel);
+        }
+      }
+    } catch (error) {
+      console.warn('YCN: Error in checkAllChannelsForNewVideos:', error);
+    }
+  }
+
+  async checkChannelForNewVideos(channelId, channel) {
+    try {
+      // Validate input
+      if (!channelId || !channel) {
+        console.warn('YCN: Invalid parameters for checkChannelForNewVideos');
+        return;
+      }
+
+      // Convert handle to real channel ID if needed
+      let realChannelId = channelId;
+      if (channelId.startsWith('handle_')) {
+        // Check if we already have a resolved channel ID stored
+        if (channel.resolvedChannelId) {
+          realChannelId = channel.resolvedChannelId;
+          console.log(`YCN: Using stored channel ID for ${channelId}: ${realChannelId}`);
+        } else {
+          try {
+            realChannelId = await this.getChannelIdFromHandle(channelId.replace('handle_', ''));
+            if (!realChannelId) {
+              console.warn(`YCN: Could not resolve handle to channel ID for ${channelId}`);
+              return;
+            }
+            
+            // Update stored channel with real ID for future use
+            const result = await chrome.storage.local.get(['channels']);
+            const channels = result.channels || {};
+            if (channels[channelId]) {
+              channels[channelId].resolvedChannelId = realChannelId;
+              await chrome.storage.local.set({ channels });
+            }
+          } catch (handleError) {
+            console.warn(`YCN: Error resolving handle for ${channelId}:`, handleError);
+            return;
+          }
+        }
+      }
+      
+      // Validate channel ID format
+      if (!realChannelId.match(/^UC[a-zA-Z0-9_-]{22}$/)) {
+        console.warn(`YCN: Invalid channel ID format: ${realChannelId}`);
+        return;
+      }
+      
+      // YouTube RSS feed URL format
+      const rssUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${realChannelId}`;
+      
+      // Fetch the RSS feed with timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
+      let response;
+      try {
+        response = await fetch(rssUrl, { signal: controller.signal });
+        clearTimeout(timeoutId);
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        if (fetchError.name === 'AbortError') {
+          console.warn(`YCN: RSS fetch timeout for channel ${channelId}`);
+        } else {
+          console.warn(`YCN: RSS fetch error for channel ${channelId}:`, fetchError);
+        }
+        return;
+      }
+      
+      if (!response.ok) {
+        console.warn(`YCN: Failed to fetch RSS for channel ${channelId} (${realChannelId}):`, response.status);
+        
+        // If 404, the channel might not exist or have no videos
+        if (response.status === 404) {
+          console.log(`YCN: Channel ${channelId} might not have public videos or RSS feed is disabled`);
+        }
+        return;
+      }
+      
+      const text = await response.text();
+      
+      // Validate RSS response
+      if (!text || text.length < 100) {
+        console.warn(`YCN: Empty or invalid RSS response for channel ${channelId}`);
+        return;
+      }
+      
+      // Parse XML using regex since DOMParser is not available in service workers
+      // Extract the first entry (latest video)
+      const entryMatch = text.match(/<entry>([\s\S]*?)<\/entry>/);
+      if (!entryMatch) {
+        console.log(`YCN: No videos found in RSS for channel ${channelId}`);
+        return;
+      }
+      
+      const entryContent = entryMatch[1];
+      
+      // Extract video information using regex with comprehensive fallbacks
+      let videoId = null;
+      
+      // Try multiple patterns for video ID extraction
+      const videoIdPatterns = [
+        /<yt:videoId>([^<]+)<\/yt:videoId>/,
+        /<id>yt:video:([^<]+)<\/id>/,
+        /<id>[^:]+:([a-zA-Z0-9_-]{11})<\/id>/,
+        /watch\?v=([a-zA-Z0-9_-]{11})/
+      ];
+      
+      for (const pattern of videoIdPatterns) {
+        const match = entryContent.match(pattern);
+        if (match && match[1]) {
+          videoId = match[1];
+          break;
+        }
+      }
+      
+      if (!videoId) {
+        console.warn(`YCN: Could not extract video ID for channel ${channelId}`);
+        console.log(`YCN: Entry content sample: ${entryContent.substring(0, 500)}`);
+        return;
+      }
+      
+      // Validate video ID format
+      if (!videoId.match(/^[a-zA-Z0-9_-]{11}$/)) {
+        console.warn(`YCN: Invalid video ID format: ${videoId}`);
+        return;
+      }
+      
+      // Extract title with CDATA handling
+      let videoTitle = 'Unknown Title';
+      const titlePatterns = [
+        /<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/title>/,
+        /<media:title[^>]*>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/media:title>/
+      ];
+      
+      for (const pattern of titlePatterns) {
+        const match = entryContent.match(pattern);
+        if (match && match[1]) {
+          videoTitle = this.decodeXmlEntities(match[1].trim());
+          break;
+        }
+      }
+      
+      // Extract published date with fallbacks
+      let publishedDate = new Date().toISOString();
+      const datePatterns = [
+        /<published>([^<]+)<\/published>/,
+        /<updated>([^<]+)<\/updated>/,
+        /<yt:published>([^<]+)<\/yt:published>/
+      ];
+      
+      for (const pattern of datePatterns) {
+        const match = entryContent.match(pattern);
+        if (match && match[1]) {
+          publishedDate = match[1];
+          break;
+        }
+      }
+      
+      // Validate date
+      const parsedDate = new Date(publishedDate);
+      if (isNaN(parsedDate.getTime())) {
+        console.warn(`YCN: Invalid date format: ${publishedDate}, using current time`);
+        publishedDate = new Date().toISOString();
+      }
+      
+      // Check if this is a new video
+      const storedLatestVideoId = channel.latestVideoId;
+      
+      if (!storedLatestVideoId || storedLatestVideoId !== videoId) {
+        console.log(`YCN: New video detected for ${channel.name}!`);
+        console.log(`YCN: Video: ${videoTitle} (${videoId})`);
+        
+        // Update stored latest video
+        const result = await chrome.storage.local.get(['channels']);
+        const channels = result.channels || {};
+        
+        if (channels[channelId]) {
+          channels[channelId].latestVideoId = videoId;
+          channels[channelId].latestVideoTitle = videoTitle;
+          channels[channelId].latestVideoDate = publishedDate;
+          channels[channelId].lastRSSCheck = Date.now();
+          
+          await chrome.storage.local.set({ channels });
+          
+          // Only send notification for truly new videos
+          try {
+            const videoPublishTime = new Date(publishedDate).getTime();
+            const approvalTime = channels[channelId].approvedAt || 0;
+            const now = Date.now();
+            
+            // Determine if we should send a notification
+            let shouldNotify = false;
+            let notificationReason = '';
+            
+            if (storedLatestVideoId && storedLatestVideoId !== videoId) {
+              // We have a different video than before - this is definitely new
+              shouldNotify = true;
+              notificationReason = 'New video detected (different from stored)';
+            } else if (!storedLatestVideoId) {
+              // First check - NEVER notify unless video is EXTREMELY recent
+              // This prevents notifications for videos that existed before we started monitoring
+              const fiveMinutesAgo = now - 300000; // 5 minutes
+              
+              if (videoPublishTime > fiveMinutesAgo) {
+                // Video published within last 5 minutes - this is genuinely brand new
+                shouldNotify = true;
+                notificationReason = 'Brand new video (< 5 minutes old)';
+              } else {
+                // Video is older than 5 minutes - it existed before we checked
+                // Store it silently for future comparison
+                notificationReason = `First check, video too old (${Math.round((now - videoPublishTime) / 60000)} minutes old)`;
+              }
+            } else {
+              // Same video as before, no notification needed
+              notificationReason = 'Same video as last check';
+            }
+            
+            if (shouldNotify) {
+              console.log(`YCN: Sending notification for ${channel.name}: ${notificationReason}`);
+              console.log(`YCN: Video: "${videoTitle}" (${videoId})`);
+              await this.sendNewVideoNotification(channelId, channel, videoTitle, videoId);
+            } else {
+              console.log(`YCN: Not sending notification for ${channel.name}: ${notificationReason}`);
+              console.log(`YCN: Video: "${videoTitle}" published ${new Date(publishedDate).toLocaleString()}`);
+              if (approvalTime) {
+                console.log(`YCN: Channel approved: ${new Date(approvalTime).toLocaleString()}`);
+              }
+            }
+          } catch (notifyError) {
+            console.warn(`YCN: Error in notification logic for ${channelId}:`, notifyError);
+          }
+        }
+      } else {
+        console.log(`YCN: No new videos for ${channel.name} (latest: ${videoTitle})`);
+      }
+      
+    } catch (error) {
+      console.warn(`YCN: Error checking RSS for channel ${channelId}:`, error);
     }
   }
 }

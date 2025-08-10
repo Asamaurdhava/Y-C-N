@@ -1,14 +1,10 @@
 # 🎯 YouTube Channel Notifier - Smart Relationship-Based Notifications
 
-**🏆 Built for GitHub "For The Love of Code" 2025 Hackathon**
-
-**Category: World Wide Wonders** - A surprisingly useful web extension that reveals your true YouTube relationships
-
 *Built with the sophisticated assistance of Claude Code - where AI-powered development meets human creativity*
 
 > **The Problem**: YouTube's subscription system notifies you about every video upload from subscribed channels, creating notification fatigue and spam.
 
-> **Our Solution**: We genuinely notify you only for videos from channels you truly love, based on your actual viewing behavior.
+> **Our Solution**: We actively monitor your favorite channels and notify you only about genuinely new videos, based on your proven viewing behavior.
 
 ---
 
@@ -21,7 +17,8 @@
 
 ### Our Smart Approach:
 - **Watch videos naturally** → We learn your preferences
-- **Prove genuine interest** (10+ videos with 50%+ completion) → We ask for permission
+- **Prove genuine interest** (10+ unique videos) → We ask for permission
+- **Active RSS monitoring** → We check for new uploads every 30 minutes
 - **Get notifications** only from channels you actually care about
 
 **Result**: Zero spam, maximum relevance. Notifications you'll actually want to receive.
@@ -128,8 +125,9 @@ Builds relationship scores silently
 
 ### 3. **Intelligent Notifications**
 ```
-Channel uploads video → Check relationship status → 
-Send notification only if approved
+RSS Feed Check (every 30 min) → New video detected → 
+Check if channel approved → Send notification → 
+Click notification opens video directly
 ```
 
 ### 4. **Continuous Learning**
@@ -173,13 +171,64 @@ Adapt UI and suggestions accordingly
 
 ---
 
-## 🛠️ Installation & Usage
+## 🛠️ Installation & Setup
 
-1. **Load Extension**: Install the Chrome extension
-2. **Watch Naturally**: Use YouTube as you normally would
-3. **See Relationships**: Check the dashboard to see your channel relationships
-4. **Approve Favorites**: When asked, approve channels you want notifications from
-5. **Enjoy Smart Alerts**: Get notifications only from channels you truly love
+### Step 1: Install Extension
+1. Load the extension in your browser (Chrome/Edge/Brave/Opera)
+2. Grant necessary permissions when prompted
+
+### Step 2: Enable Browser Notifications
+**⚠️ CRITICAL: Browser notifications must be enabled for the extension to work!**
+
+#### **Chrome / Chromium-based browsers:**
+1. Go to `chrome://settings/content/notifications`
+2. Ensure "Sites can ask to send notifications" is enabled
+3. OR click the extension icon → Click "Allow" when prompted
+
+#### **Firefox:**
+1. Go to `about:preferences#privacy`
+2. Scroll to "Permissions" → Click "Settings" next to Notifications
+3. Ensure notifications are allowed for the extension
+
+#### **Safari:**
+1. Safari → Preferences → Websites → Notifications
+2. Allow notifications for the extension
+
+#### **Edge:**
+1. Go to `edge://settings/content/notifications`
+2. Ensure "Ask before sending" is enabled
+3. Allow when the extension requests permission
+
+### Step 3: Use the Extension
+1. **Watch Naturally**: Use YouTube as you normally would
+2. **Build Relationships**: Extension tracks your genuine viewing patterns
+3. **Get Asked**: After 10+ videos from a channel, we'll ask for permission
+4. **Active Monitoring**: RSS feeds checked every 30 minutes for new videos
+5. **Smart Notifications**: Get notified only about genuinely new uploads
+
+### Step 4: Manual Check (Optional)
+- Click the extension popup → "🔄 Check for New Videos" button
+- Instantly checks all approved channels for new content
+
+---
+
+## 🔔 Notification Troubleshooting
+
+### Not Getting Notifications?
+
+1. **Check Browser Settings**: Ensure notifications are enabled (see setup above)
+2. **Check System Settings**: 
+   - **Windows**: Settings → System → Notifications → Chrome (enabled)
+   - **macOS**: System Preferences → Notifications → Chrome (enabled)
+   - **Linux**: Check your desktop environment's notification settings
+3. **Check Do Not Disturb**: Disable focus/DND modes temporarily
+4. **Test Notifications**: Use the manual check button in popup
+5. **Extension Permissions**: Ensure extension has notification permission in browser
+
+### Still Issues?
+- Check browser console for errors (F12 → Console)
+- Reload the extension (chrome://extensions → reload button)
+- Try the manual check button to verify RSS feeds work
 
 ---
 
@@ -209,11 +258,14 @@ Instead of asking "Do you want ALL notifications from this channel?", we ask "Yo
 
 *Achieved through Claude Code's rigorous development methodology*
 
-- **Backward Compatible**: Preserves all existing functionality (Claude Code's incremental enhancement approach)
-- **Performance Optimized**: Minimal impact on browsing experience (AI-driven optimization strategies)
-- **Error Resilient**: Graceful fallbacks and comprehensive error handling (Claude Code's defensive programming)
-- **Scalable Architecture**: Clean separation of concerns (systematic design patterns)
-- **Modern Design**: Professional UI with delightful interactions (Claude Code's attention to user experience)
+- **Active RSS Monitoring**: Real-time YouTube RSS feed parsing for new video detection
+- **Service Worker Architecture**: Manifest V3 compatible background processing with chrome.alarms API
+- **Handle Resolution**: Automatic YouTube @handle to channel ID conversion with intelligent caching
+- **Regex XML Parsing**: Service worker-compatible XML parsing without DOMParser dependency
+- **Error Resilient**: Comprehensive error handling for network failures, malformed data, and edge cases
+- **Performance Optimized**: Minimal impact with 30-minute check intervals and debounced operations
+- **Smart Notification Logic**: Time-based filtering prevents false notifications for existing videos
+- **Cross-Browser Compatible**: Works on Chrome, Edge, Brave, Opera, Firefox, and Safari
 
 **Built for the real world, not the demo.** *(Claude Code's pragmatic philosophy)* 🚀
 
