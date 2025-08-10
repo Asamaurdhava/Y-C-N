@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      width: 350px;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      margin: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .container {
+      background: white;
+      border-radius: 12px;
+      margin: 8px;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    
+    .header h3 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    
+    .header .subtitle {
+      margin-top: 5px;
+      font-size: 11px;
+      opacity: 0.9;
+    }
+    
+    .current-video {
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      padding: 15px;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+    
+    .current-video-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .current-video-title .live-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+      box-shadow: 0 0 10px currentColor;
+    }
+    
+    .video-info {
+      background: white;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .video-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: #222;
+      margin-bottom: 5px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+    
+    .channel-name {
+      font-size: 11px;
+      color: #666;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .no-video {
+      text-align: center;
+      color: #666;
+      font-size: 13px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+    
+    .no-video:hover {
+      background: #e9ecef;
+    }
+    
+    .no-video-icon {
+      font-size: 30px;
+      margin-bottom: 10px;
+      opacity: 0.7;
+      animation: float 3s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+    
+    .status-legend {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: white;
+      padding: 8px;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      font-size: 10px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+      z-index: 100;
+    }
+    
+    .current-video-title:hover + .status-legend {
+      opacity: 1;
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-bottom: 3px;
+    }
+    
+    .legend-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+    
+    .stats {
+      padding: 20px;
+    }
+    
+    .stat-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding: 12px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+    
+    .stat-item:hover {
+      background: #e9ecef;
+      transform: translateX(5px);
+    }
+    
+    .stat-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #495057;
+    }
+    
+    .stat-value {
+      font-size: 16px;
+      font-weight: 600;
+      color: #212529;
+    }
+    
+    .dashboard-btn {
+      width: calc(100% - 40px);
+      margin: 0 20px 20px;
+      padding: 12px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+    
+    .dashboard-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+    }
+    
+    .status {
+      text-align: center;
+      padding: 15px 20px;
+      font-size: 12px;
+      color: #666;
+      background: #f8f9fa;
+      border-top: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h3>YouTube Channel Notifier</h3>
+      <div class="subtitle">Smart notifications for your favorite creators</div>
+    </div>
+    
+    <div class="current-video" id="currentVideoSection" style="position: relative;">
+      <div class="current-video-title">
+        <span class="live-dot"></span>
+        <span>Currently Playing</span>
+      </div>
+      <div class="status-legend">
+        <div class="legend-item">
+          <span class="legend-dot" style="background: #dc3545;"></span>
+          <span>Away from YouTube</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-dot" style="background: #28a745;"></span>
+          <span>On YouTube</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-dot" style="background: #ffc107;"></span>
+          <span>Watching Video</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-dot" style="background: #6c757d;"></span>
+          <span>Unknown</span>
+        </div>
+      </div>
+      <div id="currentVideoContent">
+        <!-- Dynamic content here -->
+      </div>
+    </div>
+    
+    <div class="stats">
+      <div class="stat-item">
+        <span class="stat-label">
+          <span>🔍</span>
+          <span>Channels Discovered</span>
+        </span>
+        <span class="stat-value" id="channelCount">0</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">
+          <span>🔔</span>
+          <span>Active Notifications</span>
+        </span>
+        <span class="stat-value" id="approvedCount">0</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">
+          <span>⏳</span>
+          <span>Ready to Activate</span>
+        </span>
+        <span class="stat-value" id="readyCount">0</span>
+      </div>
+    </div>
+    
+    <button class="dashboard-btn" id="openDashboard">
+      View Channel Dashboard →
+    </button>
+    
+    <div class="status" id="status">
+      Watch 10 unique videos from a channel to enable notifications
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
