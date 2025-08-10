@@ -1,5 +1,7 @@
 # 🎯 YouTube Channel Notifier - Smart Relationship-Based Notifications
 
+**🏆 Built for GitHub "For The Love of Code" 2025 Hackathon**
+
 *Built with the sophisticated assistance of Claude Code - where AI-powered development meets human creativity*
 
 > **The Problem**: YouTube's subscription system notifies you about every video upload from subscribed channels, creating notification fatigue and spam.
