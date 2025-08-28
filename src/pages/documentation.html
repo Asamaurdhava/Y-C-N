@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Technical Documentation - YouTube Channel Notifier</title>
+  <link rel="stylesheet" href="../styles/styles.css">
+  <style>
+    /* Extension red color scheme animations */
+    @keyframes colorShift {
+      0% { color: #ff0000; }
+      25% { color: #cc0000; }
+      50% { color: #990000; }
+      75% { color: #ff3333; }
+      100% { color: #ff0000; }
+    }
+
+    @keyframes gradientShift {
+      0% { background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%); }
+      25% { background: linear-gradient(135deg, #cc0000 0%, #990000 100%); }
+      50% { background: linear-gradient(135deg, #990000 0%, #ff3333 100%); }
+      75% { background: linear-gradient(135deg, #ff3333 0%, #ff0000 100%); }
+      100% { background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%); }
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { 
+        text-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
+        transform: scale(1);
+      }
+      50% { 
+        text-shadow: 0 0 20px rgba(204, 0, 0, 0.8);
+        transform: scale(1.02);
+      }
+    }
+
+    .animated-title {
+      animation: colorShift 4s ease-in-out infinite;
+      font-weight: 600;
+      letter-spacing: -0.025em;
+    }
+
+    .animated-gradient {
+      background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
+      animation: gradientShift 6s ease-in-out infinite;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: 600;
+      letter-spacing: -0.025em;
+    }
+
+    .pulse-title {
+      animation: pulseGlow 3s ease-in-out infinite;
+      font-weight: 600;
+      letter-spacing: -0.025em;
+    }
+
+    .docs-nav {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      display: flex;
+      gap: 8px;
+      z-index: 10;
+    }
+
+    .nav-btn {
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      background: #ffffff;
+      color: #333;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      transition: all 0.3s ease;
+      border: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .nav-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+      background: #f8f9fa;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .primary-btn {
+      background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
+      color: white;
+      box-shadow: 0 2px 8px rgba(255, 0, 0, 0.3);
+    }
+
+    .primary-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(255, 0, 0, 0.4);
+    }
+
+    .secondary-btn {
+      background: #ffffff;
+      color: #333;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      border: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .secondary-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+      background: #f8f9fa;
+    }
+
+    .api-section {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      margin-bottom: 25px;
+      box-shadow: var(--shadow-sm);
+      border-left: 4px solid transparent;
+      transition: all 0.3s ease;
+    }
+
+    .api-section:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .api-section.background { border-left-color: #ff0000; }
+    .api-section.content { border-left-color: #cc0000; }
+    .api-section.popup { border-left-color: #990000; }
+    .api-section.dashboard { border-left-color: #ff3333; }
+    .api-section.auth { border-left-color: #ff6666; }
+
+    .code-block {
+      background: #1f2937;
+      color: #f9fafb;
+      padding: 20px;
+      border-radius: 8px;
+      font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+      font-size: 0.875rem;
+      margin: 15px 0;
+      overflow-x: auto;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+
+    .code-block .comment { color: #9ca3af; }
+    .code-block .keyword { color: #f59e0b; }
+    .code-block .string { color: #10b981; }
+    .code-block .number { color: #3b82f6; }
+    .code-block .function { color: #8b5cf6; }
+
+    .method-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 15px 0;
+    }
+
+    .method-signature {
+      background: #1f2937;
+      color: #f59e0b;
+      padding: 10px 15px;
+      border-radius: 6px;
+      font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+      font-size: 0.875rem;
+      margin-bottom: 15px;
+    }
+
+    .parameter-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0;
+    }
+
+    .parameter-table th,
+    .parameter-table td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .parameter-table th {
+      background: #f9fafb;
+      font-weight: 600;
+    }
+
+    .inline-code {
+      background: #f1f5f9;
+      color: #1e293b;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+      font-size: 0.875rem;
+    }
+
+    .warning-badge {
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      color: #92400e;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-left: 10px;
+    }
+
+    .new-badge {
+      background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+      color: #166534;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-left: 10px;
+    }
+
+    /* List and heading indentation styles */
+    h2 {
+      margin-top: 2.5rem;
+      margin-bottom: 1.5rem;
+      padding-left: 0;
+    }
+    
+    h3 {
+      margin-top: 2rem;
+      margin-bottom: 1.25rem;
+      padding-left: 1rem;
+    }
+    
+    h4 {
+      margin-top: 1.5rem;
+      margin-bottom: 1rem;
+      padding-left: 2rem;
+    }
+    
+    ul {
+      padding-left: 2.5rem;
+      margin-top: 1rem;
+      margin-bottom: 1.5rem;
+      line-height: 1.8;
+    }
+    
+    li {
+      margin-bottom: 0.75rem;
+      position: relative;
+    }
+    
+    /* Custom bullet points */
+    ul li::marker {
+      color: #ff0000;
+      font-weight: bold;
+    }
+    
+    ol li::marker {
+      color: #ff0000;
+      font-weight: 600;
+    }
+    
+    /* Nested lists */
+    ul ul {
+      margin-top: 0.5rem;
+      margin-bottom: 0.5rem;
+      padding-left: 1.5rem;
+    }
+    
+    /* Section content indentation */
+    .api-section > p {
+      padding-left: 1rem;
+      line-height: 1.7;
+    }
+    
+    .api-section > .code-block {
+      margin-left: 1rem;
+      margin-right: 1rem;
+    }
+    
+    .method-card {
+      margin-left: 1rem;
+      margin-right: 1rem;
+    }
+    
+    /* Professional layout improvements */
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+      position: relative;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+      padding: 40px 20px;
+      background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
+      border-radius: 16px;
+      color: white;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      position: relative;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin: 0 0 15px 0;
+      letter-spacing: -0.025em;
+    }
+
+    .header-description {
+      font-size: 1.125rem;
+      color: rgba(255,255,255,0.9);
+      margin: 0;
+      font-weight: 400;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 40px;
+      align-items: start;
+    }
+
+    @media (max-width: 1024px) {
+      .layout {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+      .sidebar {
+        order: 2;
+      }
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 20px;
+    }
+
+    .toc {
+      background: white;
+      border-radius: 12px;
+      padding: 25px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .toc-title {
+      margin: 0 0 20px 0;
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: #1f2937;
+      border-bottom: 2px solid #ff0000;
+      padding-bottom: 10px;
+    }
+
+    .toc-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .toc-link {
+      color: #6b7280;
+      text-decoration: none;
+      font-size: 0.875rem;
+      padding: 8px 12px;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+      border-left: 3px solid transparent;
+    }
+
+    .toc-link:hover {
+      color: #ff0000;
+      background: rgba(255,0,0,0.05);
+      border-left-color: #ff0000;
+      transform: translateX(4px);
+    }
+
+    .main-content {
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+
+    /* Smooth scrolling */
+    html {
+      scroll-behavior: smooth;
+    }
+
+    /* Better section spacing */
+    .api-section {
+      scroll-margin-top: 80px;
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .api-section:hover {
+      transform: none;
+      box-shadow: 0 6px 25px rgba(0,0,0,0.12);
+    }
+
+    .api-section h2 {
+      margin: 0 0 25px 0;
+      font-size: 1.75rem;
+      border-bottom: 3px solid;
+      padding-bottom: 12px;
+    }
+
+    .api-section.background h2 { border-bottom-color: #ff0000; }
+    .api-section.content h2 { border-bottom-color: #cc0000; }
+    .api-section.popup h2 { border-bottom-color: #990000; }
+    .api-section.dashboard h2 { border-bottom-color: #ff3333; }
+    .api-section.auth h2 { border-bottom-color: #ff6666; }
+
+    .api-section h3 {
+      margin: 25px 0 15px 0;
+      color: #1f2937;
+    }
+
+    .api-section h4 {
+      margin: 20px 0 12px 0;
+      color: #374151;
+    }
+
+    .api-section p {
+      line-height: 1.7;
+      color: #374151;
+      margin-bottom: 16px;
+    }
+
+    .api-section ul {
+      line-height: 1.7;
+      color: #374151;
+    }
+
+    .api-section ul li {
+      margin-bottom: 8px;
+    }
+
+    .section {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .architecture-diagram {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      margin: 25px 0;
+      box-shadow: var(--shadow-sm);
+      text-align: center;
+    }
+
+    .component-box {
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+      border: 2px solid #7dd3fc;
+      border-radius: 8px;
+      padding: 15px;
+      margin: 10px;
+      display: inline-block;
+      min-width: 120px;
+    }
+
+    .flow-arrow {
+      font-size: 1.5rem;
+      color: #6b7280;
+      margin: 0 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="docs-nav">
+        <button id="guideNavBtn" class="btn nav-btn">Getting Started</button>
+        <button id="dashboardNavBtn" class="btn nav-btn">Dashboard</button>
+      </div>
+      <div class="header-content">
+        <h1>Technical Documentation</h1>
+        <p class="header-description">Complete technical reference for YouTube Channel Notifier</p>
+      </div>
+    </div>
+
+    <div class="layout">
+      <!-- Sidebar Navigation -->
+      <aside class="sidebar">
+        <div class="toc">
+          <h3 class="toc-title">Table of Contents</h3>
+          <nav class="toc-nav">
+            <a href="#architecture" class="toc-link">Architecture Overview</a>
+            <a href="#manifest" class="toc-link">Manifest Configuration</a>
+            <a href="#background" class="toc-link">Background Script (Service Worker)</a>
+            <a href="#content" class="toc-link">Content Script</a>
+            <a href="#popup" class="toc-link">Popup Interface</a>
+            <a href="#dashboard" class="toc-link">Dashboard System</a>
+            <a href="#auth" class="toc-link">Authentication & Privacy</a>
+            <a href="#storage" class="toc-link">Data Storage</a>
+            <a href="#intelligence" class="toc-link">Intelligence Engine</a>
+            <a href="#permissions" class="toc-link">Permissions & Security</a>
+            <a href="#api" class="toc-link">Internal APIs</a>
+            <a href="#deployment" class="toc-link">Deployment & Building</a>
+          </nav>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="main-content">
+
+        <!-- Architecture Overview -->
+        <div id="architecture" class="api-section background">
+          <h2>Architecture Overview</h2>
+          
+          <div class="architecture-diagram">
+            <div class="component-box">
+              <strong>Content Script</strong><br>
+              <small>content.js</small><br>
+              YouTube Tracking
+            </div>
+            <span class="flow-arrow">→</span>
+            <div class="component-box">
+              <strong>Service Worker</strong><br>
+              <small>background.js</small><br>
+              Data Processing
+            </div>
+            <span class="flow-arrow">→</span>
+            <div class="component-box">
+              <strong>Storage</strong><br>
+              <small>chrome.storage</small><br>
+              Local Data
+            </div>
+            <br><br>
+            <div class="component-box">
+              <strong>Popup</strong><br>
+              <small>popup.html/js</small><br>
+              Quick Stats
+            </div>
+            <span class="flow-arrow">↔</span>
+            <div class="component-box">
+              <strong>Dashboard</strong><br>
+              <small>dashboard.html/js</small><br>
+              Management UI
+            </div>
+            <span class="flow-arrow">↔</span>
+            <div class="component-box">
+              <strong>Auth System</strong><br>
+              <small>auth.js</small><br>
+              Ghost Protocol
+            </div>
+          </div>
+
+          <p>YCN follows Chrome Extension Manifest V3 architecture with a service worker-based background script, content script injection, and multiple user interfaces.</p>
+
+          <h3>Core Components</h3>
+          <ul>
+            <li><strong>Content Script:</strong> Injected into YouTube pages for video tracking</li>
+            <li><strong>Service Worker:</strong> Background processing, RSS checking, notifications</li>
+            <li><strong>Popup:</strong> Quick access interface with current stats</li>
+            <li><strong>Dashboard:</strong> Full channel management and analytics</li>
+            <li><strong>Auth System:</strong> Privacy-preserving authentication</li>
+          </ul>
+        </div>
+
+      <!-- Manifest Configuration -->
+      <div id="manifest" class="api-section content">
+        <h2>Manifest Configuration</h2>
+        
+        <div class="code-block">
+          <span class="comment">// manifest.json - Manifest V3 configuration</span>
+          {
+            <span class="string">"manifest_version"</span>: <span class="number">3</span>,
+            <span class="string">"name"</span>: <span class="string">"YouTube Channel Notifier"</span>,
+            <span class="string">"version"</span>: <span class="string">"2.4.0"</span>,
+            
+            <span class="comment">// Permissions for core functionality</span>
+            <span class="string">"permissions"</span>: [
+              <span class="string">"storage"</span>,          <span class="comment">// Local data storage</span>
+              <span class="string">"notifications"</span>,   <span class="comment">// Browser notifications</span>
+              <span class="string">"alarms"</span>,          <span class="comment">// Periodic RSS checks</span>
+              <span class="string">"identity"</span>,        <span class="comment">// Google OAuth</span>
+              <span class="string">"cookies"</span>          <span class="comment">// Session detection</span>
+            ],
+            
+            <span class="comment">// Host permissions for YouTube integration</span>
+            <span class="string">"host_permissions"</span>: [
+              <span class="string">"https://www.youtube.com/*"</span>,
+              <span class="string">"https://www.googleapis.com/*"</span>
+            ],
+            
+            <span class="comment">// Content script injection</span>
+            <span class="string">"content_scripts"</span>: [{
+              <span class="string">"matches"</span>: [<span class="string">"https://www.youtube.com/*"</span>],
+              <span class="string">"js"</span>: [<span class="string">"content.js"</span>],
+              <span class="string">"run_at"</span>: <span class="string">"document_idle"</span>
+            }]
+          }
+        </div>
+
+        <h3>Key Permissions</h3>
+        <table class="parameter-table">
+          <thead>
+            <tr>
+              <th>Permission</th>
+              <th>Purpose</th>
+              <th>Usage</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>storage</code></td>
+              <td>Local data persistence</td>
+              <td>Channel data, settings, watch history</td>
+            </tr>
+            <tr>
+              <td><code>notifications</code></td>
+              <td>Browser notifications</td>
+              <td>New video alerts</td>
+            </tr>
+            <tr>
+              <td><code>alarms</code></td>
+              <td>Periodic tasks</td>
+              <td>RSS feed checking every 30 minutes</td>
+            </tr>
+            <tr>
+              <td><code>identity</code></td>
+              <td>Google OAuth</td>
+              <td>Ghost Protocol authentication</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Background Script -->
+      <div id="background" class="api-section background">
+        <h2>Background Script (Service Worker)</h2>
+        
+        <p>The service worker (<code>background.js</code>) handles all background processing, RSS checking, and inter-component communication.</p>
+
+        <h3>Core Classes & Functions</h3>
+
+        <div class="method-card">
+          <div class="method-signature">
+            class YouTubeChannelNotifier
+          </div>
+          <p>Main service worker class handling all background operations.</p>
+          
+          <h4>Key Methods:</h4>
+          <ul>
+            <li><code>init()</code> - Initialize service worker</li>
+            <li><code>handleMessage(request, sender, sendResponse)</code> - Message routing</li>
+            <li><code>startPeriodicCheck()</code> - Begin RSS monitoring</li>
+            <li><code>updateBadge()</code> - Update extension badge</li>
+          </ul>
+        </div>
+
+        <div class="method-card">
+          <div class="method-signature">
+            checkForNewVideos()
+          </div>
+          <p>Periodic function that checks RSS feeds for new uploads from approved channels.</p>
+          
+          <table class="parameter-table">
+            <thead>
+              <tr>
+                <th>Step</th>
+                <th>Action</th>
+                <th>Purpose</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td>Load approved channels</td>
+                <td>Get channels eligible for notifications</td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>Fetch RSS feeds</td>
+                <td>Check for new videos (last 24 hours)</td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td>Compare timestamps</td>
+                <td>Identify truly new content</td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td>Send notifications</td>
+                <td>Alert user to new uploads</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="code-block">
+          <span class="comment">// Example: RSS checking implementation</span>
+          <span class="keyword">async</span> <span class="function">checkChannelRSS</span>(channelId, channel) {
+            <span class="keyword">const</span> rssUrl = <span class="string">`https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`</span>;
+            
+            <span class="keyword">try</span> {
+              <span class="keyword">const</span> response = <span class="keyword">await</span> <span class="function">fetch</span>(rssUrl);
+              <span class="keyword">const</span> xmlText = <span class="keyword">await</span> response.<span class="function">text</span>();
+              <span class="keyword">const</span> parser = <span class="keyword">new</span> <span class="function">DOMParser</span>();
+              <span class="keyword">const</span> doc = parser.<span class="function">parseFromString</span>(xmlText, <span class="string">'text/xml'</span>);
+              
+              <span class="comment">// Extract video entries and check timestamps</span>
+              <span class="keyword">const</span> entries = doc.<span class="function">querySelectorAll</span>(<span class="string">'entry'</span>);
+              <span class="comment">// ... processing logic</span>
+            } <span class="keyword">catch</span> (error) {
+              console.<span class="function">warn</span>(<span class="string">'RSS check failed:'</span>, error);
+            }
+          }
+        </div>
+
+        <div class="warning-badge">Performance Note</div>
+        <p style="margin-top: 10px;">RSS checks are throttled to once every 30 minutes to respect YouTube's rate limits and preserve battery life.</p>
+      </div>
+
+      <!-- Content Script -->
+      <div id="content" class="api-section content">
+        <h2>Content Script</h2>
+        
+        <p>The content script (<code>content.js</code>) runs on YouTube pages to track viewing behavior and extract channel information.</p>
+
+        <h3>Key Classes</h3>
+
+        <div class="method-card">
+          <div class="method-signature">
+            class YouTubeTracker <span class="new-badge">Enhanced</span>
+          </div>
+          <p>Main tracking class with advanced skip detection and background tracking capabilities.</p>
+          
+          <h4>New Features:</h4>
+          <ul>
+            <li><strong>Background Tracking:</strong> Continues when tab is inactive (for audio)</li>
+            <li><strong>Skip Detection:</strong> Validates continuous watching vs. seeking</li>
+            <li><strong>Smart Validation:</strong> Only counts actual engagement time</li>
+            <li><strong>Extended Idle:</strong> 5+ minute tolerance for passive listening</li>
+          </ul>
+        </div>
+
+        <div class="method-card">
+          <div class="method-signature">
+            checkProgress() <span class="warning-badge">Updated</span>
+          </div>
+          <p>Enhanced progress checking with skip detection and continuous watch validation.</p>
+          
+          <div class="code-block">
+            <span class="comment">// Skip detection algorithm</span>
+            <span class="keyword">const</span> videoTimeAdvanced = currentVideoTime - <span class="keyword">this</span>.lastVideoTime;
+            <span class="keyword">const</span> skipThreshold = timeSinceLastCheck + <span class="number">0.5</span>; <span class="comment">// Buffer for lag</span>
+
+            <span class="keyword">if</span> (videoTimeAdvanced > skipThreshold && videoTimeAdvanced > <span class="number">2</span>) {
+              console.<span class="function">log</span>(<span class="string">'Skip detected!'</span>);
+              <span class="keyword">this</span>.skipDetected = <span class="keyword">true</span>;
+              <span class="comment">// Reset continuous tracking from current position</span>
+              <span class="keyword">this</span>.continuousWatchStart = currentVideoTime;
+            }
+          </div>
+
+          <table class="parameter-table">
+            <thead>
+              <tr>
+                <th>Variable</th>
+                <th>Purpose</th>
+                <th>Type</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>skipDetected</code></td>
+                <td>Flag for forward seeking</td>
+                <td>Boolean</td>
+              </tr>
+              <tr>
+                <td><code>actualWatchedTime</code></td>
+                <td>Real time spent watching</td>
+                <td>Number (seconds)</td>
+              </tr>
+              <tr>
+                <td><code>highestContinuousProgress</code></td>
+                <td>Furthest point reached without skipping</td>
+                <td>Number (0-1)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="method-card">
+          <div class="method-signature">
+            class SessionIntelligence
+          </div>
+          <p>Analyzes viewing patterns and provides contextual insights.</p>
+          
+          <ul>
+            <li><code>analyzeViewingPattern()</code> - Pattern recognition</li>
+            <li><code>getViewingContext()</code> - Session context</li>
+            <li><code>predictNextWatch()</code> - Recommendation engine integration</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Popup Interface -->
+      <div id="popup" class="api-section popup">
+        <h2>Popup Interface</h2>
+        
+        <p>The popup provides quick access to tracking status and basic statistics.</p>
+
+        <h3>Components</h3>
+
+        <div class="method-card">
+          <div class="method-signature">
+            popup.html + popup.js
+          </div>
+          <p>Lightweight interface showing current tracking status and key metrics.</p>
+          
+          <h4>Real-time Data:</h4>
+          <ul>
+            <li><strong>Current Video:</strong> Active tracking status</li>
+            <li><strong>Channel Stats:</strong> Total tracked, approved, ready</li>
+            <li><strong>Recent Activity:</strong> Last watched videos</li>
+            <li><strong>Quick Actions:</strong> Dashboard access, settings</li>
+          </ul>
+        </div>
+
+        <div class="code-block">
+          <span class="comment">// Popup data loading</span>
+          <span class="keyword">async</span> <span class="function">loadPopupData</span>() {
+            <span class="keyword">const</span> result = <span class="keyword">await</span> chrome.storage.local.<span class="function">get</span>([
+              <span class="string">'channels'</span>, 
+              <span class="string">'currentVideo'</span>, 
+              <span class="string">'recentVideos'</span>
+            ]);
+            
+            <span class="comment">// Update UI with live data</span>
+            <span class="keyword">this</span>.<span class="function">updateStats</span>(result.channels);
+            <span class="keyword">this</span>.<span class="function">updateCurrentVideo</span>(result.currentVideo);
+          }
+        </div>
+      </div>
+
+      <!-- Dashboard System -->
+      <div id="dashboard" class="api-section dashboard">
+        <h2>Dashboard System</h2>
+        
+        <p>The dashboard is the main management interface for channel approval, analytics, and data export.</p>
+
+        <h3>Core Features</h3>
+
+        <div class="method-card">
+          <div class="method-signature">
+            class ChannelDashboard
+          </div>
+          <p>Main dashboard controller with real-time updates and filtering.</p>
+          
+          <h4>Key Methods:</h4>
+          <ul>
+            <li><code>getFilteredChannels()</code> - Filter and sort channels alphabetically <span class="new-badge">Updated</span></li>
+            <li><code>renderChannelCard()</code> - Generate channel display cards</li>
+            <li><code>handleChannelAction()</code> - Process approve/deny actions</li>
+            <li><code>exportData(format)</code> - Data export in multiple formats</li>
+          </ul>
+        </div>
+
+        <div class="method-card">
+          <div class="method-signature">
+            exportData(format: 'json' | 'csv' | 'opml' | 'urls') <span class="new-badge">Enhanced</span>
+          </div>
+          <p>Export channel data in multiple formats with alphabetical sorting.</p>
+          
+          <table class="parameter-table">
+            <thead>
+              <tr>
+                <th>Format</th>
+                <th>Use Case</th>
+                <th>Content</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>JSON</td>
+                <td>Complete backup</td>
+                <td>Full channel data with metadata</td>
+              </tr>
+              <tr>
+                <td>CSV</td>
+                <td>Spreadsheet analysis</td>
+                <td>Channel stats in tabular format</td>
+              </tr>
+              <tr>
+                <td>OPML</td>
+                <td>RSS readers</td>
+                <td>XML feed subscriptions</td>
+              </tr>
+              <tr>
+                <td>URLs</td>
+                <td>Browser bookmarks</td>
+                <td>Plain text channel URLs</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Real-time Updates</h3>
+        <p>The dashboard uses <code>chrome.storage.onChanged</code> listeners to update in real-time as you watch videos:</p>
+
+        <div class="code-block">
+          <span class="comment">// Real-time dashboard updates</span>
+          chrome.storage.onChanged.<span class="function">addListener</span>((changes, namespace) => {
+            <span class="keyword">if</span> (namespace === <span class="string">'local'</span> && changes.channels) {
+              <span class="comment">// Automatically refresh channel display</span>
+              <span class="keyword">this</span>.<span class="function">loadChannels</span>();
+              <span class="keyword">this</span>.<span class="function">updateStats</span>();
+              <span class="keyword">this</span>.<span class="function">showUpdateNotification</span>();
+            }
+          });
+        </div>
+      </div>
+
+      <!-- Authentication & Privacy -->
+      <div id="auth" class="api-section auth">
+        <h2>Authentication & Privacy (Ghost Protocol)</h2>
+        
+        <p>YCN's Ghost Protocol provides email notifications without storing personal information.</p>
+
+        <h3>Core Classes</h3>
+
+        <div class="method-card">
+          <div class="method-signature">
+            class GhostProtocolAuth
+          </div>
+          <p>Privacy-preserving authentication system with universal browser support.</p>
+          
+          <h4>Key Features:</h4>
+          <ul>
+            <li><strong>Zero-Knowledge:</strong> Email hashed, never stored</li>
+            <li><strong>Universal Support:</strong> Chrome, Edge, Brave, Opera, Comet</li>
+            <li><strong>Fallback Authentication:</strong> Multiple auth methods</li>
+            <li><strong>Browser Detection:</strong> Automatic adaptation</li>
+          </ul>
+        </div>
+
+        <div class="method-card">
+          <div class="method-signature">
+            async hashEmail(email: string): Promise&lt;string&gt;
+          </div>
+          <p>Creates irreversible hash of email address for privacy-safe identification.</p>
+          
+          <div class="code-block">
+            <span class="comment">// Email hashing with salt</span>
+            <span class="keyword">async</span> <span class="function">hashEmail</span>(email) {
+              <span class="keyword">const</span> encoder = <span class="keyword">new</span> <span class="function">TextEncoder</span>();
+              <span class="keyword">const</span> data = encoder.<span class="function">encode</span>(email.<span class="function">toLowerCase</span>() + <span class="keyword">this</span>.salt);
+              <span class="keyword">const</span> hashBuffer = <span class="keyword">await</span> crypto.subtle.<span class="function">digest</span>(<span class="string">'SHA-256'</span>, data);
+              <span class="keyword">const</span> hashArray = <span class="function">Array.from</span>(<span class="keyword">new</span> <span class="function">Uint8Array</span>(hashBuffer));
+              <span class="keyword">return</span> hashArray.<span class="function">map</span>(b => b.<span class="function">toString</span>(<span class="number">16</span>).<span class="function">padStart</span>(<span class="number">2</span>, <span class="string">'0'</span>)).<span class="function">join</span>(<span class="string">''</span>);
+            }
+          </div>
+        </div>
+
+        <div class="method-card">
+          <div class="method-signature">
+            class EmailNotificationService
+          </div>
+          <p>Handles notification queuing, batching, and delivery without storing PII.</p>
+          
+          <ul>
+            <li><code>queueNotification()</code> - Add to batch queue</li>
+            <li><code>processBatch()</code> - Send batched notifications</li>
+            <li><code>isQuietHours()</code> - Respect user's quiet time</li>
+            <li><code>getPrivacyReport()</code> - Show privacy status</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Data Storage -->
+      <div id="storage" class="api-section background">
+        <h2>Data Storage</h2>
+        
+        <p>YCN uses Chrome's local storage API for all data persistence. No external servers or cloud storage.</p>
+
+        <h3>Storage Schema</h3>
+
+        <div class="code-block">
+          <span class="comment">// Main data structure</span>
+          {
+            <span class="string">"channels"</span>: {
+              <span class="string">"UC_channel_id"</span>: {
+                <span class="string">"name"</span>: <span class="string">"Channel Name"</span>,
+                <span class="string">"count"</span>: <span class="number">15</span>,                    <span class="comment">// Videos watched</span>
+                <span class="string">"approved"</span>: <span class="keyword">true</span>,               <span class="comment">// Notification approved</span>
+                <span class="string">"firstSeen"</span>: <span class="number">1640995200000</span>,       <span class="comment">// Timestamp</span>
+                <span class="string">"lastVideo"</span>: {
+                  <span class="string">"videoId"</span>: <span class="string">"video_id"</span>,
+                  <span class="string">"title"</span>: <span class="string">"Video Title"</span>,
+                  <span class="string">"timestamp"</span>: <span class="number">1640995200000</span>
+                },
+                <span class="string">"watchedVideos"</span>: [<span class="string">"vid1"</span>, <span class="string">"vid2"</span>],  <span class="comment">// Completed videos</span>
+                <span class="string">"relationship"</span>: {
+                  <span class="string">"score"</span>: <span class="number">85</span>,                   <span class="comment">// 0-100 relationship strength</span>
+                  <span class="string">"badge"</span>: <span class="string">"Favorite"</span>,        <span class="comment">// Display badge</span>
+                  <span class="string">"trend"</span>: <span class="string">"growing"</span>            <span class="comment">// growing/stable/declining</span>
+                }
+              }
+            },
+            <span class="string">"currentVideo"</span>: {                   <span class="comment">// Currently playing</span>
+              <span class="string">"channelId"</span>: <span class="string">"UC_id"</span>,
+              <span class="string">"videoId"</span>: <span class="string">"video_id"</span>,
+              <span class="string">"channelName"</span>: <span class="string">"Channel"</span>,
+              <span class="string">"videoTitle"</span>: <span class="string">"Title"</span>
+            }
+          }
+        </div>
+
+        <h3>Storage Operations</h3>
+
+        <table class="parameter-table">
+          <thead>
+            <tr>
+              <th>Operation</th>
+              <th>Frequency</th>
+              <th>Purpose</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Channel Update</td>
+              <td>Per video completion</td>
+              <td>Increment watch count, update last video</td>
+            </tr>
+            <tr>
+              <td>Current Video</td>
+              <td>On play/pause/stop</td>
+              <td>Update popup display</td>
+            </tr>
+            <tr>
+              <td>Settings Sync</td>
+              <td>On change</td>
+              <td>Preserve user preferences</td>
+            </tr>
+            <tr>
+              <td>Cleanup</td>
+              <td>Daily</td>
+              <td>Remove stale data, optimize storage</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="warning-badge">Privacy Note</div>
+        <p style="margin-top: 10px;">All data remains local to your browser. Nothing is transmitted to external servers except during optional Ghost Protocol email setup.</p>
+      </div>
+
+      <!-- Intelligence Engine -->
+      <div id="intelligence" class="api-section content">
+        <h2>Intelligence Engine</h2>
+        
+        <p>YCN's intelligence system (<code>intelligence.js</code>) provides advanced analytics and recommendations.</p>
+
+        <h3>Core Algorithms</h3>
+
+        <div class="method-card">
+          <div class="method-signature">
+            class RelationshipScoreCalculator
+          </div>
+          <p>Calculates sophisticated relationship scores using 5-factor analysis.</p>
+          
+          <h4>Scoring Factors:</h4>
+          <table class="parameter-table">
+            <thead>
+              <tr>
+                <th>Factor</th>
+                <th>Weight</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Frequency</td>
+                <td>30%</td>
+                <td>How often you watch (videos per day/week)</td>
+              </tr>
+              <tr>
+                <td>Recency</td>
+                <td>20%</td>
+                <td>How recently you watched (decay over time)</td>
+              </tr>
+              <tr>
+                <td>Depth</td>
+                <td>20%</td>
+                <td>Watch completion percentage</td>
+              </tr>
+              <tr>
+                <td>Loyalty</td>
+                <td>20%</td>
+                <td>Consistency over time periods</td>
+              </tr>
+              <tr>
+                <td>Growth</td>
+                <td>10%</td>
+                <td>Trending up or down recently</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="method-card">
+          <div class="method-signature">
+            class RecommendationEngine
+          </div>
+          <p>Provides channel similarity and viewing predictions.</p>
+          
+          <ul>
+            <li><code>findSimilarChannels()</code> - Content-based recommendations</li>
+            <li><code>predictNextWatch()</code> - Time-based predictions</li>
+            <li><code>calculateChannelSimilarity()</code> - Pattern matching</li>
+          </ul>
+        </div>
+
+        <div class="method-card">
+          <div class="method-signature">
+            class UserProfileAnalyzer
+          </div>
+          <p>Analyzes overall viewing patterns and user behavior.</p>
+          
+          <h4>Profile Types:</h4>
+          <ul>
+            <li><strong>Loyal Viewer:</strong> 3+ high-engagement channels, 8+ avg per channel</li>
+            <li><strong>Explorer:</strong> 50+ total videos, 10+ different channels</li>
+            <li><strong>Deep Viewer:</strong> 12+ average videos per channel</li>
+            <li><strong>Binger:</strong> 100+ total videos watched</li>
+            <li><strong>Casual Viewer:</strong> Default category</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Internal APIs -->
+      <div id="api" class="api-section popup">
+        <h2>Internal APIs</h2>
+        
+        <p>YCN components communicate through Chrome's message passing system.</p>
+
+        <h3>Message Types</h3>
+
+        <div class="method-card">
+          <div class="method-signature">
+            RECORD_VIDEO_WATCH
+          </div>
+          <p>Content script → Background: Record completed video watch</p>
+          
+          <div class="code-block">
+            {
+              <span class="string">"type"</span>: <span class="string">"RECORD_VIDEO_WATCH"</span>,
+              <span class="string">"channelId"</span>: <span class="string">"UC_channel_id"</span>,
+              <span class="string">"videoId"</span>: <span class="string">"video_id"</span>,
+              <span class="string">"channelInfo"</span>: {
+                <span class="string">"name"</span>: <span class="string">"Channel Name"</span>,
+                <span class="string">"handle"</span>: <span class="string">"@channelhandle"</span>
+              },
+              <span class="string">"videoTitle"</span>: <span class="string">"Video Title"</span>,
+              <span class="string">"watchPercentage"</span>: <span class="number">0.75</span>
+            }
+          </div>
+        </div>
+
+        <div class="method-card">
+          <div class="method-signature">
+            UPDATE_CURRENT_VIDEO
+          </div>
+          <p>Content script → Background: Update currently playing video</p>
+          
+          <div class="code-block">
+            {
+              <span class="string">"type"</span>: <span class="string">"UPDATE_CURRENT_VIDEO"</span>,
+              <span class="string">"channelId"</span>: <span class="string">"UC_channel_id"</span>,
+              <span class="string">"videoId"</span>: <span class="string">"video_id"</span>,
+              <span class="string">"channelInfo"</span>: { <span class="comment">/* channel data */</span> },
+              <span class="string">"videoTitle"</span>: <span class="string">"Current Video Title"</span>
+            }
+          </div>
+        </div>
+
+        <div class="method-card">
+          <div class="method-signature">
+            CHANNEL_ACTION
+          </div>
+          <p>Dashboard → Background: Approve/deny channel notifications</p>
+          
+          <div class="code-block">
+            {
+              <span class="string">"type"</span>: <span class="string">"CHANNEL_ACTION"</span>,
+              <span class="string">"channelId"</span>: <span class="string">"UC_channel_id"</span>,
+              <span class="string">"action"</span>: <span class="string">"approve"</span> | <span class="string">"deny"</span> | <span class="string">"reset"</span>
+            }
+          </div>
+        </div>
+
+        <h3>Response Format</h3>
+        <p>All messages return standardized responses:</p>
+
+        <div class="code-block">
+          <span class="comment">// Success response</span>
+          {
+            <span class="string">"success"</span>: <span class="keyword">true</span>,
+            <span class="string">"data"</span>: { <span class="comment">/* response data */</span> },
+            <span class="string">"timestamp"</span>: <span class="number">1640995200000</span>
+          }
+
+          <span class="comment">// Error response</span>
+          {
+            <span class="string">"success"</span>: <span class="keyword">false</span>,
+            <span class="string">"error"</span>: <span class="string">"Error message"</span>,
+            <span class="string">"code"</span>: <span class="string">"ERROR_CODE"</span>
+          }
+        </div>
+      </div>
+
+      <!-- Deployment -->
+      <div id="deployment" class="api-section dashboard">
+        <h2>Deployment & Building</h2>
+        
+        <p>YCN is a pure client-side extension with no build process required.</p>
+
+        <h3>File Structure</h3>
+        <div class="code-block">
+youtube-channel-notifier/
+├── manifest.json              <span class="comment"># Extension configuration</span>
+├── background.js              <span class="comment"># Service worker</span>
+├── content.js                 <span class="comment"># YouTube page injection</span>
+├── popup.html/js              <span class="comment"># Extension popup</span>
+├── dashboard.html/js          <span class="comment"># Main management UI</span>
+├── guide.html                 <span class="comment"># User guide</span>
+├── documentation.html         <span class="comment"># Technical docs</span>
+├── ghost-dashboard.html/js    <span class="comment"># Privacy settings</span>
+├── auth.js                    <span class="comment"># Authentication system</span>
+├── intelligence.js            <span class="comment"># Analytics engine</span>
+├── styles.css                 <span class="comment"># Shared styling</span>
+└── icons/                     <span class="comment"># Extension icons</span>
+    ├── icon16.png
+    ├── icon48.png
+    └── icon128.png
+        </div>
+
+        <h3>Chrome Web Store Deployment</h3>
+        <ol>
+          <li><strong>Package:</strong> Zip all files (exclude .git, node_modules, etc.)</li>
+          <li><strong>Upload:</strong> Submit to Chrome Developer Dashboard</li>
+          <li><strong>Review:</strong> Automated + manual review process</li>
+          <li><strong>Publish:</strong> Available in Chrome Web Store</li>
+        </ol>
+
+        <div class="tip-box">
+          <div class="tip-title">Development Tips</div>
+          <p>Load unpacked extension in chrome://extensions/ during development. Enable Developer Mode and use "Load unpacked" for testing.</p>
+        </div>
+
+        <h3>Version History</h3>
+        <table class="parameter-table">
+          <thead>
+            <tr>
+              <th>Version</th>
+              <th>Date</th>
+              <th>Key Changes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>2.4.0</td>
+              <td>Current</td>
+              <td>Background tracking, skip detection, alphabetical sorting</td>
+            </tr>
+            <tr>
+              <td>2.3.0</td>
+              <td>Previous</td>
+              <td>Ghost Protocol, universal browser support</td>
+            </tr>
+            <tr>
+              <td>2.2.0</td>
+              <td>Previous</td>
+              <td>Relationship scoring, intelligence engine</td>
+            </tr>
+            <tr>
+              <td>2.1.0</td>
+              <td>Previous</td>
+              <td>Dashboard UI, data export features</td>
+            </tr>
+          </tbody>
+        </table>
+        </div>
+
+        <!-- Footer -->
+        <div class="section" style="text-align: center; margin-top: 50px;">
+          <h2>Documentation Complete</h2>
+          <p>This documentation covers all technical aspects of YouTube Channel Notifier.</p>
+          <p>For user-friendly guidance, check out the <strong>Getting Started Guide</strong>.</p>
+          
+          <div style="margin-top: 30px;">
+            <button id="viewGuideBtn" class="btn primary-btn">
+              View Getting Started Guide
+            </button>
+            <button id="openDashboardBtn" class="btn secondary-btn" style="margin-left: 15px;">
+              Open Dashboard
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="documentation.js"></script>
+</body>
+</html>

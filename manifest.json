@@ -1,0 +1,61 @@
+{
+  "manifest_version": 3,
+  "name": "YouTube Channel Notifier",
+  "version": "1.0.0",
+  "description": "Get notified about new videos from channels you actually watch",
+  
+  "permissions": [
+    "storage",
+    "notifications",
+    "activeTab",
+    "alarms",
+    "identity"
+  ],
+  
+  "oauth2": {
+    "client_id": "440708243624-95qh3upn1rejedp501nec674md33ksm3.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/userinfo.email",
+      "https://www.googleapis.com/auth/userinfo.profile"
+    ]
+  },
+  
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
+  
+  "host_permissions": [
+    "*://*.youtube.com/*"
+  ],
+  
+  "background": {
+    "service_worker": "src/background/background.js"
+  },
+  
+  "content_scripts": [
+    {
+      "matches": ["*://*.youtube.com/*"],
+      "js": ["src/content/content.js"],
+      "run_at": "document_end"
+    }
+  ],
+  
+  "action": {
+    "default_popup": "src/popup/popup.html",
+    "default_title": "YouTube Channel Notifier"
+  },
+  
+  "icons": {
+    "16": "src/assets/icons/icon16.png",
+    "32": "src/assets/icons/icon32.png",
+    "48": "src/assets/icons/icon48.png",
+    "128": "src/assets/icons/icon128.png"
+  },
+  
+  "web_accessible_resources": [
+    {
+      "resources": ["src/pages/dashboard.html", "src/utils/intelligence.js"],
+      "matches": ["*://*.youtube.com/*"]
+    }
+  ]
+}

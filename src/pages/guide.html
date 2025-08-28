@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Getting Started Guide - YouTube Channel Notifier</title>
+  <link rel="stylesheet" href="../styles/styles.css">
+  <style>
+    /* Extension red color scheme animations */
+    @keyframes colorShift {
+      0% { color: #ff0000; }
+      25% { color: #cc0000; }
+      50% { color: #990000; }
+      75% { color: #ff3333; }
+      100% { color: #ff0000; }
+    }
+
+    @keyframes gradientShift {
+      0% { background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%); }
+      25% { background: linear-gradient(135deg, #cc0000 0%, #990000 100%); }
+      50% { background: linear-gradient(135deg, #990000 0%, #ff3333 100%); }
+      75% { background: linear-gradient(135deg, #ff3333 0%, #ff0000 100%); }
+      100% { background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%); }
+    }
+
+    /* Icon styles removed - text only navigation */
+
+    .guide-nav {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      display: flex;
+      gap: 8px;
+      z-index: 10;
+    }
+
+    .nav-btn {
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      background: #ffffff;
+      color: #333;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      transition: all 0.3s ease;
+      border: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .nav-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+      background: #f8f9fa;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .primary-btn {
+      background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
+      color: white;
+      box-shadow: 0 2px 8px rgba(255, 0, 0, 0.3);
+    }
+
+    .primary-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(255, 0, 0, 0.4);
+    }
+
+    .step-card {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      margin-bottom: 25px;
+      box-shadow: var(--shadow-sm);
+      border-left: 4px solid transparent;
+      transition: all 0.3s ease;
+    }
+
+    .step-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .step-card.step-1 { border-left-color: #ff0000; }
+    .step-card.step-2 { border-left-color: #cc0000; }
+    .step-card.step-3 { border-left-color: #990000; }
+    .step-card.step-4 { border-left-color: #ff3333; }
+    .step-card.step-5 { border-left-color: #ff6666; }
+
+    .step-number {
+      display: inline-block;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
+      color: white;
+      text-align: center;
+      line-height: 40px;
+      font-weight: 600;
+      margin-right: 15px;
+      font-size: 1.125rem;
+    }
+
+    .step-title {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .step-title h3 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 600;
+      letter-spacing: -0.025em;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin: 30px 0;
+    }
+
+    .feature-card {
+      background: white;
+      border-radius: 12px;
+      padding: 25px;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.3s ease;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .feature-icon {
+      font-size: 2rem;
+      margin-bottom: 15px;
+    }
+
+    /* List and heading indentation styles */
+    h2 {
+      margin-top: 2.5rem;
+      margin-bottom: 1.5rem;
+      padding-left: 0;
+    }
+    
+    h3 {
+      margin-top: 2rem;
+      margin-bottom: 1.25rem;
+      padding-left: 1rem;
+    }
+    
+    h4 {
+      margin-top: 1.5rem;
+      margin-bottom: 1rem;
+      padding-left: 2rem;
+    }
+    
+    ul, ol {
+      padding-left: 2.5rem;
+      margin-top: 1rem;
+      margin-bottom: 1.5rem;
+      line-height: 1.8;
+    }
+    
+    li {
+      margin-bottom: 0.75rem;
+      position: relative;
+    }
+    
+    /* Custom bullet points */
+    ul li::marker {
+      color: #ff0000;
+      font-weight: bold;
+    }
+    
+    ol li::marker {
+      color: #ff0000;
+      font-weight: 600;
+    }
+    
+    /* Nested lists */
+    ul ul, ol ol, ul ol, ol ul {
+      margin-top: 0.5rem;
+      margin-bottom: 0.5rem;
+      padding-left: 1.5rem;
+    }
+    
+    /* Section paragraphs */
+    .guide-section > p {
+      padding-left: 1rem;
+      line-height: 1.7;
+    }
+    
+    .feature-box {
+      margin-left: 1rem;
+      margin-right: 1rem;
+    }
+    
+    .feature-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin-bottom: 15px;
+      letter-spacing: -0.025em;
+      color: #ff0000;
+      border-bottom: 2px solid #ff0000;
+      padding-bottom: 8px;
+    }
+
+    .tip-box {
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+      border: 1px solid #7dd3fc;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+
+    .tip-title {
+      font-weight: 600;
+      color: #0369a1;
+      margin-bottom: 8px;
+    }
+
+    .warning-box {
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      border: 1px solid #f59e0b;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+
+    .warning-title {
+      font-weight: 600;
+      color: #92400e;
+      margin-bottom: 8px;
+    }
+
+    .code-snippet {
+      background: #1f2937;
+      color: #f9fafb;
+      padding: 15px;
+      border-radius: 6px;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 0.875rem;
+      margin: 15px 0;
+      overflow-x: auto;
+    }
+
+    .highlight {
+      background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
+      color: white;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    /* Smooth scrolling and better organization */
+    html {
+      scroll-behavior: smooth;
+    }
+
+    .section {
+      scroll-margin-top: 80px;
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .section h2 {
+      margin: 0 0 20px 0;
+      font-size: 1.75rem;
+      border-bottom: 3px solid #ff0000;
+      padding-bottom: 12px;
+    }
+
+    .section h3 {
+      margin: 25px 0 15px 0;
+    }
+
+    .section p {
+      line-height: 1.7;
+      color: #374151;
+      margin-bottom: 16px;
+    }
+
+    .section ul {
+      line-height: 1.7;
+      color: #374151;
+    }
+
+    .section ul li {
+      margin-bottom: 8px;
+    }
+
+    /* Professional layout improvements */
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+      position: relative;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+      padding: 40px 20px;
+      background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
+      border-radius: 16px;
+      color: white;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      position: relative;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin: 0 0 15px 0;
+      letter-spacing: -0.025em;
+    }
+
+    .header-description {
+      font-size: 1.125rem;
+      color: rgba(255,255,255,0.9);
+      margin: 0;
+      font-weight: 400;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 40px;
+      align-items: start;
+    }
+
+    @media (max-width: 1024px) {
+      .layout {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+      .sidebar {
+        order: 2;
+      }
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 20px;
+    }
+
+    .toc {
+      background: white;
+      border-radius: 12px;
+      padding: 25px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .toc-title {
+      margin: 0 0 20px 0;
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: #1f2937;
+      border-bottom: 2px solid #ff0000;
+      padding-bottom: 10px;
+    }
+
+    .toc-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toc-link {
+      color: #6b7280;
+      text-decoration: none;
+      font-size: 0.875rem;
+      padding: 8px 12px;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+      border-left: 3px solid transparent;
+    }
+
+    .toc-link:hover {
+      color: #ff0000;
+      background: rgba(255,0,0,0.05);
+      border-left-color: #ff0000;
+      transform: translateX(4px);
+    }
+
+    .main-content {
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="guide-nav">
+        <button id="docsNavBtn" class="btn nav-btn">Documentation</button>
+        <button id="dashboardNavBtn" class="btn nav-btn">Dashboard</button>
+      </div>
+      <div class="header-content">
+        <h1>Getting Started Guide</h1>
+        <p class="header-description">Your complete guide to mastering YouTube Channel Notifier</p>
+      </div>
+    </div>
+
+    <div class="layout">
+      <!-- Sidebar Navigation -->
+      <aside class="sidebar">
+        <div class="toc">
+          <h3 class="toc-title">Quick Navigation</h3>
+          <nav class="toc-nav">
+            <a href="#welcome" class="toc-link">Welcome & Introduction</a>
+            <a href="#how-it-works" class="toc-link">How YCN Works</a>
+            <a href="#getting-started" class="toc-link">Getting Started Guide</a>
+            <a href="#dashboard" class="toc-link">Understanding Your Dashboard</a>
+            <a href="#relationship-scores" class="toc-link">Relationship Scores</a>
+            <a href="#advanced-features" class="toc-link">Advanced Features</a>
+            <a href="#troubleshooting" class="toc-link">Common Questions</a>
+            <a href="#ready" class="toc-link">You're All Set!</a>
+          </nav>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="main-content">
+
+        <!-- Introduction Section -->
+        <div id="welcome" class="section">
+        <h2>Welcome to YouTube Channel Notifier</h2>
+        <p>YouTube Channel Notifier (YCN) is an intelligent Chrome extension that automatically tracks your YouTube viewing habits and sends you notifications when your favorite channels upload new videos. Unlike YouTube's noisy notification system, YCN only notifies you about channels you <strong>actually watch</strong>.</p>
+        
+        <div class="tip-box">
+          <div class="tip-title">Pro Tip</div>
+          <p>YCN learns your viewing patterns automatically. You don't need to manually subscribe or configure anything - just watch YouTube normally!</p>
+        </div>
+      </div>
+
+      <!-- How It Works -->
+      <div id="how-it-works" class="section">
+        <h2>How YCN Works</h2>
+        <div class="feature-grid">
+          <div class="feature-card">
+            <div class="feature-title">Smart Tracking</div>
+            <p>YCN watches your YouTube habits in the background, noting which channels you watch and how much of each video you complete.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-title">Intelligent Filtering</div>
+            <p>Only channels you've watched <span class="highlight">10+ videos</span> from (with 50% completion) become eligible for notifications.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-title">Smart Notifications</div>
+            <p>Get notified about new uploads from channels you genuinely care about, not every channel you've ever clicked on.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-title">Relationship Scoring</div>
+            <p>YCN calculates your relationship strength with each channel based on frequency, recency, and engagement patterns.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step by Step Guide -->
+      <div id="getting-started" class="section">
+        <h2>Getting Started - Step by Step</h2>
+        
+        <div class="step-card step-1">
+          <div class="step-title">
+            <span class="step-number">1</span>
+            <h3>Install & Pin the Extension</h3>
+          </div>
+          <p>After installing YCN from the Chrome Web Store, pin it to your toolbar for easy access. Click the puzzle piece icon in your Chrome toolbar and pin YouTube Channel Notifier.</p>
+          <div class="tip-box">
+            <div class="tip-title">Why Pin?</div>
+            <p>Pinning gives you quick access to your channel statistics and current tracking status.</p>
+          </div>
+        </div>
+
+        <div class="step-card step-2">
+          <div class="step-title">
+            <span class="step-number">2</span>
+            <h3>Watch YouTube Normally</h3>
+          </div>
+          <p>Just browse and watch YouTube as you usually do! YCN will automatically start tracking channels you watch frequently. You'll see a small indicator in the extension popup showing which video is currently being tracked.</p>
+          <div class="warning-box">
+            <div class="warning-title">Important</div>
+            <p>YCN only counts videos you watch at least <strong>50% of the way through</strong> without skipping. This ensures accurate tracking of your real interests.</p>
+          </div>
+        </div>
+
+        <div class="step-card step-3">
+          <div class="step-title">
+            <span class="step-number">3</span>
+            <h3>Monitor Your Progress</h3>
+          </div>
+          <p>Click the YCN icon to see your current tracking status. The popup shows:</p>
+          <ul style="margin-left: 20px; margin-top: 10px;">
+            <li><strong>Current Video:</strong> What you're watching now</li>
+            <li><strong>Channels Tracked:</strong> Total channels being monitored</li>
+            <li><strong>Ready for Approval:</strong> Channels with 10+ videos watched</li>
+            <li><strong>Active Notifications:</strong> Approved channels sending notifications</li>
+          </ul>
+        </div>
+
+        <div class="step-card step-4">
+          <div class="step-title">
+            <span class="step-number">4</span>
+            <h3>Open Your Dashboard</h3>
+          </div>
+          <p>Click <strong>"Open Dashboard"</strong> in the popup to access your full channel management interface. This is where the magic happens!</p>
+          <p>The dashboard shows all tracked channels with detailed information:</p>
+          <ul style="margin-left: 20px; margin-top: 10px;">
+            <li>📊 <strong>Watch Statistics:</strong> How many videos you've watched</li>
+            <li>❤️ <strong>Relationship Score:</strong> Your connection strength with each channel</li>
+            <li>🎯 <strong>Current Status:</strong> Tracking, Ready, or Approved</li>
+            <li>📈 <strong>Watch History:</strong> Recent videos you've watched</li>
+          </ul>
+        </div>
+
+        <div class="step-card step-5">
+          <div class="step-title">
+            <span class="step-number">5</span>
+            <h3>Approve Your Favorite Channels</h3>
+          </div>
+          <p>When a channel reaches <span class="highlight">10+ watched videos</span>, it becomes "Ready" for approval. Click the <strong>"Approve Notifications"</strong> button for channels you want to be notified about.</p>
+          
+          <div class="tip-box">
+            <div class="tip-title">Smart Filtering</div>
+            <p>Use the filter buttons to view:<br>
+            • <strong>All Channels</strong> - Everything being tracked<br>
+            • <strong>Ready (10+)</strong> - Channels ready for approval<br>
+            • <strong>Approved</strong> - Active notification channels<br>
+            • <strong>Still Tracking</strong> - Channels under 10 videos</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Understanding the Interface -->
+      <div id="dashboard" class="section">
+        <h2 class="animated-title">🎛️ Understanding Your Dashboard</h2>
+        
+        <div class="feature-grid">
+          <div class="feature-card">
+            <div class="feature-title">Channel Cards</div>
+            <p>Each channel shows your relationship score, watch count, current video, and approval status. Cards change color based on status.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-title">Live Updates</div>
+            <p>Your dashboard updates in real-time as you watch videos. No need to refresh - it's always current!</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-title">Relationship Scores</div>
+            <p>Scores from 0-100 based on frequency, recency, engagement depth, loyalty, and growth trends.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-title">Data Export</div>
+            <p>Export your data in multiple formats: JSON, CSV, OPML (RSS), or plain URLs for backup or analysis.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Relationship Scores Explained -->
+      <div id="relationship-scores" class="section">
+        <h2>Understanding Relationship Scores</h2>
+        <p>YCN calculates sophisticated relationship scores to help you understand your connection with each channel:</p>
+        
+        <div style="margin-top: 20px;">
+          <div class="feature-card" style="margin-bottom: 15px;">
+            <strong>❤️ Favorite (80-100):</strong> Your most beloved channels - high frequency, recent activity, consistent watching
+          </div>
+          <div class="feature-card" style="margin-bottom: 15px;">
+            <strong>😊 Regular (60-79):</strong> Channels you watch often with good engagement
+          </div>
+          <div class="feature-card" style="margin-bottom: 15px;">
+            <strong>👍 Casual (40-59):</strong> Occasional viewing with moderate interest
+          </div>
+          <div class="feature-card" style="margin-bottom: 15px;">
+            <strong>👀 New (20-39):</strong> Recently discovered channels, still building relationship
+          </div>
+          <div class="feature-card">
+            <strong>💤 Dormant (0-19):</strong> Channels you used to watch but haven't engaged with recently
+          </div>
+        </div>
+      </div>
+
+      <!-- Advanced Features -->
+      <div id="advanced-features" class="section">
+        <h2>Advanced Features</h2>
+        
+        <h3 style="font-size: 1.25rem; margin-bottom: 15px;">Ghost Protocol (Privacy Mode)</h3>
+        <p>Enable email notifications while maintaining complete privacy:</p>
+        <ul style="margin-left: 20px; margin-top: 10px;">
+          <li>Your email address is never stored - only a one-way hash</li>
+          <li>Zero-knowledge proof system</li>
+          <li>Universal browser support (Chrome, Edge, Brave, Opera)</li>
+          <li>Configurable notification frequency and quiet hours</li>
+        </ul>
+
+        <div class="tip-box">
+          <div class="tip-title">Maximum Privacy</div>
+          <p>Ghost Protocol allows email notifications without storing any personal information. Even we can't see your email address!</p>
+        </div>
+
+        <h3 class="animated-title" style="font-size: 1.25rem; margin-bottom: 15px; margin-top: 30px;">📊 Smart Analytics</h3>
+        <p>YCN provides deep insights into your viewing patterns:</p>
+        <ul style="margin-left: 20px; margin-top: 10px;">
+          <li><strong>Viewing Trends:</strong> Track growth and decline in channel relationships</li>
+          <li><strong>Watch Patterns:</strong> Understand your viewing habits by time and day</li>
+          <li><strong>Engagement Depth:</strong> See how much of each video you typically watch</li>
+          <li><strong>Discovery Timeline:</strong> When you first found each channel</li>
+        </ul>
+      </div>
+
+      <!-- Troubleshooting -->
+      <div id="troubleshooting" class="section">
+        <h2>Common Questions & Troubleshooting</h2>
+        
+        <div class="feature-card" style="margin-bottom: 20px;">
+          <div class="feature-title">❓ Why aren't videos being tracked?</div>
+          <p>YCN only tracks videos you watch at least 50% through without skipping. Make sure you're actually watching, not just having videos open in background tabs.</p>
+        </div>
+
+        <div class="feature-card" style="margin-bottom: 20px;">
+          <div class="feature-title">❓ Why don't I see notifications yet?</div>
+          <p>You need to watch 10+ videos from a channel first, then manually approve it in your dashboard. YCN doesn't automatically enable notifications.</p>
+        </div>
+
+        <div class="feature-card" style="margin-bottom: 20px;">
+          <div class="feature-title">❓ Can I track music/long videos?</div>
+          <p>Yes! YCN tracks videos in the background even when you switch tabs or minimize Chrome. Perfect for music, podcasts, or long tutorials.</p>
+        </div>
+
+        <div class="feature-card" style="margin-bottom: 20px;">
+          <div class="feature-title">❓ How do I backup my data?</div>
+          <p>Use the Export Data feature in Settings. You can export to JSON (complete data), CSV (spreadsheet), OPML (RSS readers), or plain URLs.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-title">❓ Is my data private?</div>
+          <p>Absolutely! All data is stored locally in your browser. With Ghost Protocol, even email notifications don't require storing your email address.</p>
+        </div>
+      </div>
+
+      <!-- Next Steps -->
+      <div id="ready" class="section">
+        <h2>You're All Set!</h2>
+        <p>You now know everything you need to get the most out of YouTube Channel Notifier. Here's what to do next:</p>
+        
+        <div class="feature-grid">
+          <div class="feature-card">
+            <div class="feature-title">Start Watching</div>
+            <p>Go watch your favorite YouTube channels. YCN will quietly track your viewing in the background.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-title">Check Your Dashboard</div>
+            <p>Visit your dashboard regularly to see which channels are ready for approval.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-title">Approve Channels</div>
+            <p>When channels reach 10+ videos, approve the ones you want notifications from.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-title">Enable Ghost Protocol</div>
+            <p>Set up email notifications for important uploads while maintaining complete privacy.</p>
+          </div>
+        </div>
+
+        <div class="tip-box" style="text-align: center; margin-top: 30px;">
+          <div class="tip-title">Ready to Get Started?</div>
+          <p>Open YouTube and start watching! YCN will take care of the rest.</p>
+          <button id="goToYouTubeBtn" class="btn primary-btn" style="margin-top: 15px;">
+            Go to YouTube
+          </button>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="guide.js"></script>
+</body>
+</html>
