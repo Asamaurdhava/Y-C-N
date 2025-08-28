@@ -27,6 +27,7 @@ YouTube Channel Notifier is a sophisticated browser extension that revolutionize
 ### Our Solution
 - **Behavioral Learning**: Tracks actual viewing patterns, not just subscriptions
 - **Smart Thresholds**: Requires 10+ video views before enabling notifications
+- **60% Engagement Rule**: Must watch 60%+ of videos continuously (intelligent skip tolerance)
 - **Active Monitoring**: Checks RSS feeds every 30 minutes for truly new content
 - **Zero Noise**: Only notifies about channels you actively watch
 
@@ -99,6 +100,13 @@ youtube-channel-notifier/
 - Smart caching strategies
 - Automatic cleanup routines
 - Optimized RSS polling intervals
+
+### Intelligent Engagement Algorithm
+- **60% Threshold**: Requires 60% continuous viewing (raised from 50%)
+- **Segment Tracking**: Accumulates multiple continuous viewing segments
+- **Smart Skip Tolerance**: Forgives intro/ad skips (<30s), allows up to 3 minor skips
+- **Major Skip Detection**: Instantly disqualifies videos with >2min or >25% jumps
+- **Real-World Viewing**: Handles natural YouTube viewing patterns intelligently
 
 ## 📦 Installation Guide
 
@@ -358,7 +366,8 @@ cd youtube-channel-notifier
 - ✅ Try refreshing the extension and attempting again
 
 #### "Not tracking YouTube videos"
-- ✅ Watch videos for 30+ seconds (50% completion required)
+- ✅ Watch videos for 30+ seconds (60% continuous engagement required)
+- ✅ Small skips (<30s) are forgiven, major skips (>2min) disqualify the video
 - ✅ Check browser console for "YCN:" log messages
 - ✅ Ensure extension has permissions for `*://youtube.com/*`
 
@@ -366,7 +375,6 @@ cd youtube-channel-notifier
 - Check the browser console (F12) for error messages
 - Review the troubleshooting section in the main documentation
 - All features work locally - no external dependencies except YouTube RSS feeds
-- Contact the Author - [Vishesh Singh Rajput](mailto:eruditevsr@gmail.com)
 
 ## 🔄 How It Works
 
@@ -389,9 +397,18 @@ graph LR
 |--------|--------|-------------|
 | View Frequency | 30% | Content consumption rate |
 | Recency | 20% | Time since last view |
-| Completion | 20% | Average watch percentage |
+| Completion | 20% | Average 60%+ engagement per video |
 | Loyalty | 20% | Return visit consistency |
 | Trend | 10% | Engagement trajectory |
+
+### Intelligent Skip Detection
+
+| Skip Type | Duration | Algorithm Response | Result |
+|-----------|----------|-------------------|---------|
+| **Intro/Ad Skip** | <30 seconds | Forgiven | ✅ Video still counts |
+| **Minor Skip** | 30s - 2 minutes | Allowed (max 3) | ⚠️ Counts if <3 total |
+| **Major Skip** | >2 minutes or >25% | Disqualified | ❌ Video not counted |
+| **Random Jumping** | Multiple skips | Blocked after 3 | ❌ Not counted |
 
 ### Relationship Classifications
 
@@ -575,7 +592,7 @@ src/
 
 ## 📄 License
 
-**© 2025 Vishesh Singh Rajput aka specstan. All Rights Reserved.**
+**© 2025 Vishesh Singh Rajput (specstan). All Rights Reserved.**
 
 This software is proprietary and confidential. Unauthorized copying, distribution, or use is strictly prohibited.
 
@@ -583,11 +600,11 @@ This software is proprietary and confidential. Unauthorized copying, distributio
 
 <div align="center">
   
-  **Developed by Vishesh Singh Rajput (specstan) with assistance from [Claude Code](https://www.anthropic.com/claude-code)**
+  **Developed by Vishesh Singh Rajput (specstan) with assistance from [Claude Code](https://claude.ai)**
   
   *A collaborative achievement combining human vision, creativity, and engineering expertise*
   *with Claude Code's AI-powered development capabilities for enhanced code quality and architecture*
   
-  [Report Issue](mailto:eruditevsr@gmail.com) • [Request Feature](mailto:eruditevsr@gmail.com) • [Contact](mailto:eruditevsr@gmail.com)
+  [Report Issue](https://github.com/issues) • [Request Feature](https://github.com/features) • [Contact](mailto:contact@example.com)
   
 </div>

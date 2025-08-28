@@ -1,44 +1,29 @@
-# 🏆 YouTube Channel Notifier - Hackathon Setup Guide
+# 🏆 YouTube Channel Notifier - Hackathon Judge Setup
 
-## For "For The Love Of Code" GitHub Hackathon Judges
+## Quick Setup for "For The Love Of Code" GitHub Hackathon 2025 Judges
 
-Thank you for reviewing my submission! This guide will help you quickly set up and experience the YouTube Channel Notifier extension.
+**Time Required: 3 minutes** | **Author: Vishesh Singh Rajput (@specstan)**
 
 ---
 
-## 🚀 Quick Setup (5 Minutes)
+## 🚀 Installation (2 Minutes)
 
-### Step 1: Download the Extension
+### Step 1: Get the Extension
 ```bash
-# Clone the repository
-git clone [repository-url]
+# Clone this repository
+git clone https://github.com/specstan/youtube-channel-notifier
 cd youtube-channel-notifier
 ```
 
-### Step 2: Load in Chrome/Edge/Brave
-1. Open your browser and navigate to:
-   - **Chrome**: `chrome://extensions/`
-   - **Edge**: `edge://extensions/`
-   - **Brave**: `brave://extensions/`
+### Step 2: Load in Browser
+1. Open Chrome/Edge/Brave → Go to `chrome://extensions/`
+2. **Enable "Developer mode"** (toggle top-right)
+3. Click **"Load unpacked"** 
+4. Select the `youtube-channel-notifier` folder
+5. ✅ Extension loads with red YouTube icon in toolbar
 
-2. Enable **Developer mode** (toggle in top-right corner)
-
-3. Click **"Load unpacked"**
-
-4. Select the `youtube-channel-notifier` folder you just cloned
-
-5. ✅ Extension is now active! You'll see the red YouTube icon in your toolbar
-
-### Step 3: Enable Browser Notifications
-**Important**: For the full experience, ensure notifications are enabled:
-
-**Chrome/Edge/Brave:**
-- Go to `chrome://settings/content/notifications`
-- Toggle "Sites can ask to send notifications" → ON
-
-**System Level (if needed):**
-- **Windows**: Settings → System → Notifications → Enable for your browser
-- **macOS**: System Preferences → Notifications → Enable for your browser
+### Step 3: Enable Notifications
+**Chrome/Edge/Brave users**: Go to `chrome://settings/content/notifications` → Enable "Sites can ask to send notifications"
 
 ---
 
@@ -52,7 +37,8 @@ cd youtube-channel-notifier
 
 #### 2. **Watch YouTube Videos**
 - Open [YouTube](https://youtube.com)
-- Watch any video for at least 30 seconds (50% completion)
+- Watch any video for at least 60% continuously
+- **Smart skip detection**: Small skips (<30s) are forgiven
 - The extension will track this automatically
 - **No configuration needed!**
 
@@ -106,7 +92,8 @@ cd youtube-channel-notifier
 - 10+ video threshold prevents spam
 
 ### 2. **Smart Notifications**
-- Only notifies for channels you actually watch
+- Only notifies for channels you actually watch (60%+ engagement)
+- Intelligent skip detection (forgives intros/ads)
 - RSS feed monitoring every 30 minutes
 - Click notification → Direct to video
 

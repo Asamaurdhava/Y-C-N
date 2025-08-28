@@ -141,7 +141,7 @@
       this.currentChannelId = null;
       this.startTime = null;
       this.lastProgress = 0;
-      this.watchThreshold = 0.5;
+      this.watchThreshold = 0.6;
       this.minWatchTime = 30;
       this.progressCheckInterval = null;
       this.urlCheckInterval = null;
@@ -155,12 +155,13 @@
       this.maxRetries = 3;
       this.sessionIntelligence = new SessionIntelligence();
       
-      // New tracking variables for skip detection
+      // Enhanced tracking variables for intelligent skip detection
       this.lastVideoTime = 0;
       this.actualWatchedTime = 0;
-      this.skipDetected = false;
-      this.continuousWatchStart = 0;
-      this.highestContinuousProgress = 0;
+      this.continuousSegments = [];
+      this.currentSegmentStart = 0;
+      this.totalSkips = 0;
+      this.majorSkipsDetected = false;
       this.lastCheckTime = Date.now();
       this.isVideoPlaying = false;
       
@@ -572,12 +573,13 @@
       this.startTime = Date.now();
       this.lastProgress = 0;
       
-      // Initialize skip detection variables
+      // Initialize intelligent tracking variables
       this.lastVideoTime = 0;
       this.actualWatchedTime = 0;
-      this.skipDetected = false;
-      this.continuousWatchStart = 0;
-      this.highestContinuousProgress = 0;
+      this.continuousSegments = [];
+      this.currentSegmentStart = 0;
+      this.totalSkips = 0;
+      this.majorSkipsDetected = false;
       this.lastCheckTime = Date.now();
       
       const video = document.querySelector('video');
@@ -685,58 +687,82 @@
         const skipThreshold = timeSinceLastCheck + 0.5; // Add small buffer for network lag
         
         if (videoTimeAdvanced > skipThreshold && videoTimeAdvanced > 2) {
-          // User skipped forward
-          console.log(`YCN: Skip detected! Jumped ${videoTimeAdvanced.toFixed(1)}s in ${timeSinceLastCheck.toFixed(1)}s`);
-          this.skipDetected = true;
-          // Reset continuous tracking from current position
-          this.continuousWatchStart = currentVideoTime;
-          this.highestContinuousProgress = currentProgress;
+          // Skip detected - analyze skip size and impact
+          const skipDuration = videoTimeAdvanced;
+          const skipPercentage = skipDuration / video.duration;
+          
+          // Save current segment before skip
+          if (this.currentSegmentStart < currentVideoTime - skipDuration) {
+            this.continuousSegments.push({
+              start: this.currentSegmentStart,
+              end: currentVideoTime - skipDuration,
+              duration: (currentVideoTime - skipDuration) - this.currentSegmentStart
+            });
+          }
+          
+          // Categorize skip severity
+          if (skipDuration > 120 || skipPercentage > 0.25) { // >2min or >25% of video
+            this.majorSkipsDetected = true;
+            console.log(`YCN: Major skip detected! ${skipDuration.toFixed(1)}s (${(skipPercentage * 100).toFixed(1)}%)`);
+          } else if (skipDuration > 30) { // Minor skip 30s-2min
+            this.totalSkips++;
+            console.log(`YCN: Minor skip detected! ${skipDuration.toFixed(1)}s (skip #${this.totalSkips})`);
+          } else {
+            // Small skip <30s (intro, ads) - more forgiving
+            console.log(`YCN: Small skip detected! ${skipDuration.toFixed(1)}s (likely intro/ad)`);
+          }
+          
+          // Start new segment from current position
+          this.currentSegmentStart = currentVideoTime;
+          
         } else if (videoTimeAdvanced < -1) {
-          // User went backward - reset continuous tracking
-          console.log('YCN: Rewind detected, resetting continuous tracking');
-          this.continuousWatchStart = currentVideoTime;
-          this.highestContinuousProgress = currentProgress;
-          this.skipDetected = false; // Give them another chance
+          // Rewind detected - save current segment and start fresh
+          console.log('YCN: Rewind detected, saving segment and restarting');
+          if (this.currentSegmentStart < currentVideoTime + 1) {
+            this.continuousSegments.push({
+              start: this.currentSegmentStart,
+              end: currentVideoTime + 1,
+              duration: (currentVideoTime + 1) - this.currentSegmentStart
+            });
+          }
+          this.currentSegmentStart = currentVideoTime;
+          
         } else if (video.paused) {
-          // Video is paused, don't count time
-          console.log('YCN: Video paused, not counting time');
+          // Video paused - don't count time but maintain segment
+          console.log('YCN: Video paused, maintaining segment');
+          
         } else {
-          // Normal playback - accumulate actual watched time
+          // Normal playback - accumulate watched time
           const timeWatched = Math.min(videoTimeAdvanced, timeSinceLastCheck);
           this.actualWatchedTime += timeWatched;
-          
-          // Update highest continuous progress (no skips)
-          if (!this.skipDetected) {
-            const continuousProgress = (currentVideoTime - this.continuousWatchStart) / video.duration;
-            this.highestContinuousProgress = Math.max(this.highestContinuousProgress, continuousProgress);
-          }
         }
+        
+        // Calculate intelligent engagement score
+        const engagementScore = this.calculateEngagementScore(video.duration, currentProgress);
         
         // Log tracking status
-        if (this.actualWatchedTime > 0 && Math.floor(this.actualWatchedTime) % 10 === 0) {
-          console.log(`YCN: Actual watched: ${this.actualWatchedTime.toFixed(1)}s, ` +
-                     `Continuous progress: ${(this.highestContinuousProgress * 100).toFixed(1)}%, ` +
-                     `Skip detected: ${this.skipDetected}`);
+        if (this.actualWatchedTime > 0 && Math.floor(this.actualWatchedTime) % 15 === 0) {
+          console.log(`YCN: Watched: ${this.actualWatchedTime.toFixed(1)}s, ` +
+                     `Engagement: ${engagementScore.toFixed(1)}%, ` +
+                     `Segments: ${this.continuousSegments.length}, ` +
+                     `Skips: ${this.totalSkips}, Major: ${this.majorSkipsDetected}`);
         }
         
-        // Check if threshold met with continuous watching (no skips)
-        const realWatchTime = this.actualWatchedTime;
-        const continuousProgressThreshold = this.skipDetected ? 
-          this.highestContinuousProgress : currentProgress;
-        
-        if (continuousProgressThreshold >= this.watchThreshold && 
-            realWatchTime >= this.minWatchTime && 
-            !this.skipDetected) {
+        // Intelligent threshold check - 60% engagement with smart skip tolerance
+        if (engagementScore >= (this.watchThreshold * 100) && 
+            this.actualWatchedTime >= this.minWatchTime && 
+            !this.majorSkipsDetected &&
+            this.totalSkips <= 3) {
           
-          console.log('YCN: Watch threshold met with continuous viewing!');
+          console.log(`YCN: 60% engagement threshold met! Score: ${engagementScore.toFixed(1)}%`);
           this.recordVideoWatch();
           // Stop checking progress but keep tracking for pause/stop
           if (this.progressCheckInterval) {
             clearInterval(this.progressCheckInterval);
             this.progressCheckInterval = null;
           }
-        } else if (this.skipDetected && currentProgress >= this.watchThreshold) {
-          console.log('YCN: User reached 50% but skipped to get there - not counting');
+        } else if (this.majorSkipsDetected || this.totalSkips > 3) {
+          console.log(`YCN: Too much skipping detected - engagement not counted`);
         }
         
         // Update for next check
@@ -747,6 +773,29 @@
       } catch (error) {
         console.warn('YCN: Error checking progress:', error);
       }
+    }
+
+    calculateEngagementScore(videoDuration, currentProgress) {
+      // Add current segment if we're still watching
+      const tempSegments = [...this.continuousSegments];
+      if (this.currentSegmentStart < this.lastVideoTime) {
+        tempSegments.push({
+          start: this.currentSegmentStart,
+          end: this.lastVideoTime,
+          duration: this.lastVideoTime - this.currentSegmentStart
+        });
+      }
+      
+      // Calculate total continuous watch time
+      const totalContinuousTime = tempSegments.reduce((total, segment) => {
+        return total + Math.max(0, segment.duration);
+      }, 0);
+      
+      // Engagement score = (continuous time / video duration) * 100
+      const engagementScore = (totalContinuousTime / videoDuration) * 100;
+      
+      // Cap at current progress percentage (can't be more engaged than how far you've watched)
+      return Math.min(engagementScore, currentProgress * 100);
     }
     
     setupVideoEventListeners(video) {
@@ -762,13 +811,27 @@
         seeked: () => {
           const seekDistance = Math.abs(video.currentTime - this.lastVideoTime);
           if (seekDistance > 2) { // Significant seek
-            console.log(`YCN: Seek detected - jumped ${seekDistance.toFixed(1)}s`);
-            if (video.currentTime > this.lastVideoTime) {
-              this.skipDetected = true;
+            console.log(`YCN: Manual seek detected - ${seekDistance.toFixed(1)}s jump`);
+            
+            // Save current segment before seek
+            if (this.currentSegmentStart < this.lastVideoTime) {
+              this.continuousSegments.push({
+                start: this.currentSegmentStart,
+                end: this.lastVideoTime,
+                duration: this.lastVideoTime - this.currentSegmentStart
+              });
             }
-            // Reset continuous tracking from new position
-            this.continuousWatchStart = video.currentTime;
-            this.highestContinuousProgress = video.currentTime / video.duration;
+            
+            // Categorize seek impact
+            const seekPercentage = seekDistance / video.duration;
+            if (seekDistance > 120 || seekPercentage > 0.25) {
+              this.majorSkipsDetected = true;
+            } else if (seekDistance > 30) {
+              this.totalSkips++;
+            }
+            
+            // Start new segment from seek position
+            this.currentSegmentStart = video.currentTime;
           }
           this.lastVideoTime = video.currentTime;
         },

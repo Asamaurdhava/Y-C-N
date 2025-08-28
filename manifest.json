@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "YouTube Channel Notifier",
   "version": "1.0.0",
-  "description": "Get notified about new videos from channels you actually watch",
+  "description": "Smart YouTube notifications based on viewing behavior - Built for GitHub Hackathon by @specstan",
   
   "permissions": [
     "storage",
