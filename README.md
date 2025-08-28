@@ -100,64 +100,273 @@ youtube-channel-notifier/
 - Automatic cleanup routines
 - Optimized RSS polling intervals
 
-## 📦 Installation
+## 📦 Installation Guide
+
+This extension has **two modes**: Basic YCN (browser notifications) and Ghost Protocol™ (email notifications). Follow the appropriate section based on your needs.
+
+---
+
+## 🚀 Part A: Basic YCN Installation (Browser Notifications Only)
 
 ### Prerequisites
-- Chrome/Edge/Brave Browser (v88+)
-- Google Cloud Console account
-- Basic understanding of browser extensions
+- Chrome, Edge, Brave, or any Chromium browser (v88+)
+- 5 minutes of your time
+- **No OAuth setup required for basic features**
 
-### Step 1: OAuth Configuration
+### Step 1: Download & Install Extension
 
-1. Navigate to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create or select a project
-3. Enable Google Identity API
-4. Create OAuth 2.0 credentials:
-   - Type: Web application
-   - Redirect URI: `https://YOUR_EXTENSION_ID.chromiumapp.org/`
-5. Update `manifest.json`:
-```json
-{
-  "oauth2": {
-    "client_id": "YOUR_CLIENT_ID.apps.googleusercontent.com",
-    "scopes": ["https://www.googleapis.com/auth/userinfo.email"]
-  }
-}
-```
-
-### Step 2: Extension Installation
-
-#### Development Mode
+#### Method 1: Quick Setup (Recommended)
 ```bash
-# Clone the repository
-git clone [repository-url]
+# 1. Download the extension
+git clone [repository-url] youtube-channel-notifier
+cd youtube-channel-notifier
 
-# Open Chrome Extensions
-chrome://extensions/
-
-# Enable Developer Mode
-Toggle "Developer mode" → ON
-
-# Load Extension
-Click "Load unpacked" → Select project directory
+# 2. Open Chrome Extensions page
+# Paste this in your browser: chrome://extensions/
 ```
 
-#### Other Browsers
-- **Firefox**: `about:debugging` → Load Temporary Add-on
-- **Edge**: Same as Chrome (`edge://extensions/`)
-- **Safari**: Preferences → Advanced → Show Develop menu
+#### Method 2: Manual Steps
+1. **Download**: Clone or download the project files
+2. **Open Browser Extensions**:
+   - **Chrome/Edge/Brave**: Navigate to `chrome://extensions/`
+   - **Firefox**: Go to `about:debugging` → "This Firefox"
+   - **Safari**: Safari → Preferences → Advanced → Show Develop menu
 
-### Step 3: Enable Notifications
+3. **Enable Developer Mode**: Toggle the switch in top-right corner
 
-1. **Browser Settings**
-   - Chrome: `chrome://settings/content/notifications`
-   - Firefox: `about:preferences#privacy`
-   - Safari: Preferences → Websites → Notifications
+4. **Load Extension**: 
+   - Click **"Load unpacked"**
+   - Select the `youtube-channel-notifier` folder
+   - ✅ Extension loads with red YouTube icon in toolbar
 
-2. **System Settings**
-   - Windows: Settings → Notifications → Browser
-   - macOS: System Preferences → Notifications
-   - Linux: Check desktop environment settings
+### Step 2: Enable Browser Notifications
+
+**Critical Step**: Browser notifications must be enabled for the extension to work.
+
+#### Quick Settings Check:
+1. **Chrome/Edge/Brave Users**:
+   ```
+   Navigate to: chrome://settings/content/notifications
+   Ensure: "Sites can ask to send notifications" is ON
+   ```
+
+2. **Firefox Users**:
+   ```
+   Navigate to: about:preferences#privacy
+   Find: Permissions → Notifications → Settings
+   Allow: Extension notification permissions
+   ```
+
+#### System-Level Settings (if notifications still don't work):
+- **Windows**: Settings → System → Notifications → [Your Browser] → ON
+- **macOS**: System Preferences → Notifications & Focus → [Your Browser] → Allow notifications
+- **Linux**: Check your desktop environment's notification settings
+
+### Step 3: Start Using YCN
+
+**🎉 You're Done!** The extension is now active and ready to learn from your YouTube behavior.
+
+**What happens next:**
+1. **Watch YouTube naturally** - No setup required
+2. **Extension learns** - Tracks channels you actually watch (10+ videos)
+3. **Get permission request** - Extension asks to enable notifications for channels you love
+4. **Receive smart notifications** - Only get notified about new videos from approved channels
+
+**Test it works:**
+- Click the extension icon → Should show "0 Channels Discovered" initially
+- Watch any YouTube video → Count increases automatically
+- No errors in browser console (F12)
+
+---
+
+## 🔐 Part B: Ghost Protocol™ Setup (Email Notifications)
+
+**Optional Advanced Feature**: Get YouTube notifications via email with zero-knowledge privacy.
+
+### When to use Ghost Protocol:
+- ✅ You want email notifications in addition to browser notifications
+- ✅ You use multiple devices and want unified notifications
+- ✅ You're interested in cutting-edge privacy technology
+- ❌ Skip this if you only want basic browser notifications
+
+### Prerequisites for Ghost Protocol
+- Completed **Part A** (Basic YCN) above
+- Google account for OAuth authentication
+- Google Cloud Console access (free)
+- Additional 10 minutes for OAuth setup
+
+### Step 1: Google Cloud OAuth Setup
+
+**Why needed?** Ghost Protocol uses Google OAuth to verify email ownership, then immediately hashes and forgets your email address.
+
+#### Detailed OAuth Configuration:
+
+1. **Create Google Cloud Project**:
+   ```
+   → Go to: https://console.cloud.google.com/
+   → Click "New Project" or select existing project
+   → Note your Project ID for later
+   ```
+
+2. **Enable Required APIs**:
+   ```
+   → Navigate to "APIs & Services" → "Library"
+   → Search for "Google Identity API" or "Identity Toolkit API"
+   → Click "Enable"
+   ```
+
+3. **Create OAuth 2.0 Credentials**:
+   ```
+   → Go to "APIs & Services" → "Credentials"
+   → Click "Create Credentials" → "OAuth client ID"
+   → Application type: "Web application"
+   → Name: "YouTube Channel Notifier"
+   ```
+
+4. **Configure Redirect URIs**:
+   ```
+   Important: You need your extension ID first!
+   
+   → Install extension first (Part A above)
+   → Go to chrome://extensions/ 
+   → Find "YouTube Channel Notifier"
+   → Copy the Extension ID (32-character string like: abcd...xyz)
+   
+   Then add redirect URI:
+   → https://[EXTENSION_ID].chromiumapp.org/
+   
+   Example: https://abcdefghijklmnopqrstuvwxyz123456.chromiumapp.org/
+   ```
+
+5. **Get Client ID**:
+   ```
+   → After creating, copy the "Client ID"
+   → Format: 123456789-abc123def456.apps.googleusercontent.com
+   → You'll need this for the next step
+   ```
+
+### Step 2: Update Extension Configuration
+
+**The OAuth credentials are already configured in the extension**, but if you want to use your own:
+
+1. **Open `manifest.json`** in the extension folder
+2. **Update the client_id**:
+   ```json
+   {
+     "oauth2": {
+       "client_id": "YOUR_CLIENT_ID_HERE.apps.googleusercontent.com",
+       "scopes": ["https://www.googleapis.com/auth/userinfo.email"]
+     }
+   }
+   ```
+3. **Reload extension** in `chrome://extensions/`
+
+### Step 3: Enable Ghost Protocol
+
+1. **Access Ghost Protocol**:
+   ```
+   → Click extension icon in toolbar
+   → Click "Ghost Protocol Settings" button
+   → Opens dedicated Ghost Protocol dashboard
+   ```
+
+2. **Authenticate with Google**:
+   ```
+   → Click "Enable Ghost Protocol"
+   → Google OAuth popup appears
+   → Sign in with your Google account
+   → Grant email permission (read-only)
+   ```
+
+3. **Verify Zero-Knowledge Setup**:
+   ```
+   → After authentication, check "Privacy Dashboard"
+   → You'll see your email has been hashed with SHA-256
+   → Original email is immediately destroyed
+   → Only the irreversible hash is stored
+   ```
+
+### Step 4: Configure Email Notifications
+
+**Customize your email notification preferences:**
+
+1. **Notification Frequency**:
+   - **Instant**: Get emails immediately when new videos are detected
+   - **5-minute batch**: Group multiple notifications together
+   - **Daily digest**: One summary email per day
+
+2. **Quiet Hours**:
+   ```
+   → Set your "Do Not Disturb" hours
+   → Example: 10 PM - 8 AM
+   → No email notifications during these hours
+   ```
+
+3. **Test Email Notifications**:
+   ```
+   → Click extension icon → "Check for New Videos"
+   → If approved channels have new videos, you'll get an email
+   → Check your inbox (and spam folder initially)
+   ```
+
+### Step 5: Verify Ghost Protocol is Working
+
+**Privacy Check** (see the magic happen):
+```
+→ Open Ghost Protocol dashboard
+→ Click "Privacy Report"
+→ Verify you see:
+  ✅ Email Hash: [long SHA-256 string]
+  ✅ Original Email: NOT STORED
+  ✅ Cryptographic Proof: Your data cannot be reverse-engineered
+```
+
+**Functionality Check**:
+```
+→ Watch 10+ YouTube videos from a channel
+→ Approve the channel for notifications
+→ Use manual check button
+→ Receive both browser AND email notifications
+```
+
+---
+
+## 🎯 Installation Summary
+
+### ✅ Basic YCN (5 minutes)
+- Download extension → Load in browser → Enable notifications → Start using
+
+### ✅ Ghost Protocol™ (Additional 10 minutes) 
+- Google Cloud OAuth setup → Configure credentials → Enable Ghost Protocol → Customize email settings
+
+### 🚨 Common Issues & Solutions
+
+#### "Extension doesn't load"
+- ✅ Ensure Developer mode is enabled
+- ✅ Check for errors in `chrome://extensions/`
+- ✅ Try reloading the extension
+
+#### "Not getting browser notifications"
+- ✅ Check `chrome://settings/content/notifications`
+- ✅ Verify system-level notification settings
+- ✅ Test with manual "Check for New Videos" button
+
+#### "Ghost Protocol authentication fails"
+- ✅ Verify correct Extension ID in OAuth redirect URI
+- ✅ Ensure Google Identity API is enabled
+- ✅ Check that OAuth credentials are properly configured
+- ✅ Try refreshing the extension and attempting again
+
+#### "Not tracking YouTube videos"
+- ✅ Watch videos for 30+ seconds (50% completion required)
+- ✅ Check browser console for "YCN:" log messages
+- ✅ Ensure extension has permissions for `*://youtube.com/*`
+
+### 📞 Need Help?
+- Check the browser console (F12) for error messages
+- Review the troubleshooting section in the main documentation
+- All features work locally - no external dependencies except YouTube RSS feeds
+- Contact the Author - [Vishesh Singh Rajput](mailto:eruditevsr@gmail.com)
 
 ## 🔄 How It Works
 
@@ -366,7 +575,7 @@ src/
 
 ## 📄 License
 
-**© 2025 Vishesh Singh Rajput (specstan). All Rights Reserved.**
+**© 2025 Vishesh Singh Rajput aka specstan. All Rights Reserved.**
 
 This software is proprietary and confidential. Unauthorized copying, distribution, or use is strictly prohibited.
 
