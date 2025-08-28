@@ -164,10 +164,14 @@ Click "Load unpacked" → Select project directory
 ### Engagement Flow
 
 ```mermaid
-User watches videos → Track viewing patterns → 
-Reach 10+ threshold → Request permission →
-Monitor RSS feeds → Detect new uploads →
-Send notifications → Direct video access
+graph LR
+    A[User watches videos] --> B[Track viewing patterns]
+    B --> C[Reach 10+ threshold]
+    C --> D[Request permission]
+    D --> E[Monitor RSS feeds]
+    E --> F[Detect new uploads]
+    F --> G[Send notifications]
+    G --> H[Direct video access]
 ```
 
 ### Scoring Algorithm
