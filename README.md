@@ -9,7 +9,7 @@
   
   **Intelligent YouTube notification system that learns from your viewing behavior**
   
-  [Features](#-features) • [Installation](#-installation) • [Architecture](#-architecture) • [Privacy](#-privacy) • [Documentation](#-documentation)
+  [Features](#-features) • [Installation](#-installation-guide) • [Architecture](#-architecture) • [Privacy](#-privacy) • [Documentation](#-documentation)
   
 </div>
 
