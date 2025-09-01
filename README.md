@@ -9,7 +9,7 @@
   
   **Intelligent YouTube notification system that learns from your viewing behavior**
   
-  [Features](#-features) • [Installation](#-quick-start-guide-for-judges) • [Architecture](#-architecture) • [Privacy](#-privacy) • [Judge Setup](JUDGE_SETUP.md) • [Testing Guide](TESTING_CHECKLIST.md)
+  [Features](#-features) • [Installation](#-quick-start-guide-for-judges) • [Architecture](#-architecture) • [Privacy](#-privacy-&-security) • [Judge Setup](JUDGE_SETUP.md) • [Testing Guide](TESTING_CHECKLIST.md)
   
 </div>
 
