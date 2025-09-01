@@ -607,11 +607,11 @@ This software is proprietary and confidential. Unauthorized copying, distributio
 
 <div align="center">
   
-  **Developed by Vishesh Singh Rajput (specstan) with assistance from [Claude Code](https://claude.ai)**
+  **Developed by Vishesh Singh Rajput (specstan) with assistance from [Claude Code](https://www.anthropic.com/claude-code)**
   
   *A collaborative achievement combining human vision, creativity, and engineering expertise*
   *with Claude Code's AI-powered development capabilities for enhanced code quality and architecture*
   
-  [🏆 Judge Setup](JUDGE_SETUP.md) • [🧪 Testing Guide](TESTING_CHECKLIST.md) • [📧 Contact](mailto:specstan@example.com)
+  [🏆 Judge Setup](JUDGE_SETUP.md) • [🧪 Testing Guide](TESTING_CHECKLIST.md) • [📧 Contact](mailto:eruditevsr@gmail.com)
   
 </div>
