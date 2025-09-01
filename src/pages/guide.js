@@ -5,9 +5,9 @@ document.addEventListener('DOMContentLoaded', function() {
   if (docsNavBtn) {
     docsNavBtn.addEventListener('click', () => {
       if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL) {
-        chrome.tabs.create({ url: chrome.runtime.getURL('documentation.html') });
+        chrome.tabs.create({ url: chrome.runtime.getURL('src/pages/documentation.html') });
       } else {
-        window.open('documentation.html', '_blank');
+        window.location.href = 'documentation.html';
       }
     });
   }
@@ -16,9 +16,9 @@ document.addEventListener('DOMContentLoaded', function() {
   if (dashboardNavBtn) {
     dashboardNavBtn.addEventListener('click', () => {
       if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL) {
-        chrome.tabs.create({ url: chrome.runtime.getURL('dashboard.html') });
+        chrome.tabs.create({ url: chrome.runtime.getURL('src/pages/dashboard.html') });
       } else {
-        window.open('dashboard.html', '_blank');
+        window.location.href = 'dashboard.html';
       }
     });
   }

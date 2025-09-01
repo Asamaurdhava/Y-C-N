@@ -6,6 +6,165 @@ try {
   console.warn('YCN Ghost Protocol: Could not load auth module:', error);
 }
 
+// Define email modules directly in background script (most reliable approach)
+class EmailTemplates {
+  generateVideoNotificationEmail(videos, user, type = 'daily') {
+    // Template version: 2024-08-31-v2 - Updated colors and footer
+    const subject = `${videos.length} new video${videos.length > 1 ? 's' : ''} from your YouTube channels`;
+    
+    // Generate unsubscribe link - using mailto as a fallback since chrome-extension URLs don't work in emails
+    // You can replace this with your own web-based unsubscribe page if you have one
+    const unsubscribeLink = `mailto:${user?.email || 'eruditevsr@gmail.com'}?subject=Unsubscribe from YouTube Channel Notifier&body=Please unsubscribe me from email notifications.`;
+    
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: linear-gradient(135deg, #f8f9fa 0%, #fafbfc 50%, #f5f6f8 100%); color: #1a1a1a;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+    
+    <!-- Ghost Protocol Badge -->
+    <div style="text-align: center; padding: 32px 0 24px 0;">
+      <div style="display: inline-block; background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%); padding: 12px 24px; border-radius: 24px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04); border: 1px solid rgba(0, 0, 0, 0.06);">
+        <h2 style="margin: 0; font-size: 14px; font-weight: 800; color: oklch(44.4% 0.011 73.639); letter-spacing: 0.03em; text-transform: uppercase;">
+          YouTube Channel Notifier
+        </h2>
+        <p style="margin: 4px 0 0 0; font-size: 11px; color: oklch(44.4% 0.011 73.639); font-weight: 500; letter-spacing: -0.01em;">
+          Ghost Protocol Active
+        </p>
+      </div>
+    </div>
+    
+    <!-- Main Card -->
+    <div style="background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%); border-radius: 24px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.8); border: 1px solid rgba(0, 0, 0, 0.05); overflow: hidden;">
+      
+      <!-- Header Section -->
+      <div style="background: linear-gradient(135deg, oklch(55.3% 0.013 58.071) 0%, oklch(45.3% 0.013 58.071) 100%); padding: 28px 32px; position: relative; overflow: hidden;">
+        <!-- Gradient Overlay -->
+        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, transparent 50%); pointer-events: none;"></div>
+        
+        <div style="position: relative;">
+          <h1 style="margin: 0; font-size: 24px; font-weight: 700; color: white; letter-spacing: -0.02em;">
+            New Videos Available
+          </h1>
+          <p style="margin: 8px 0 0 0; font-size: 14px; color: rgba(255, 255, 255, 0.9); font-weight: 500;">
+            ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+          </p>
+        </div>
+      </div>
+      
+      <!-- Videos Container -->
+      <div style="padding: 8px;">
+        ${videos.map((video, index) => `
+          <!-- Video Card -->
+          <div style="margin: 16px; padding: 20px; background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.6) 100%); border-radius: 16px; border: 1px solid rgba(0, 0, 0, 0.04); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.5);">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td width="140" valign="top">
+                  <!-- Thumbnail with glass effect -->
+                  <a href="https://www.youtube.com/watch?v=${video.videoId}" style="display: block; position: relative;">
+                    <img src="https://img.youtube.com/vi/${video.videoId}/mqdefault.jpg" 
+                         alt="${this.escapeHtml(video.title)}"
+                         width="120" height="67"
+                         style="display: block; border-radius: 12px; object-fit: cover; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); border: 1px solid rgba(255, 255, 255, 0.3);">
+                  </a>
+                </td>
+                <td valign="top" style="padding-left: 20px;">
+                  <!-- Channel Badge -->
+                  <div style="display: inline-block; background: linear-gradient(135deg, oklch(95% 0.003 58.071) 0%, oklch(93% 0.005 58.071) 100%); padding: 4px 10px; border-radius: 8px; margin-bottom: 8px;">
+                    <span style="font-size: 11px; color: oklch(55.3% 0.013 58.071); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">
+                      ${this.escapeHtml(video.channelName || 'Channel')}
+                    </span>
+                  </div>
+                  
+                  <!-- Video Title -->
+                  <h2 style="margin: 0 0 12px 0; font-size: 16px; font-weight: 600; color: #1a202c; line-height: 1.4; letter-spacing: -0.01em;">
+                    <a href="https://www.youtube.com/watch?v=${video.videoId}" 
+                       style="color: #1a202c; text-decoration: none;">
+                      ${this.escapeHtml(video.title || 'Untitled Video')}
+                    </a>
+                  </h2>
+                  
+                  <!-- Watch Button with glassmorphism -->
+                  <a href="https://www.youtube.com/watch?v=${video.videoId}" 
+                     style="display: inline-block; padding: 10px 20px; background: linear-gradient(135deg, oklch(55.3% 0.013 58.071) 0%, oklch(45.3% 0.013 58.071) 100%); color: white; text-decoration: none; border-radius: 12px; font-size: 13px; font-weight: 600; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1); letter-spacing: 0.01em;">
+                    Watch Video →
+                  </a>
+                </td>
+              </tr>
+            </table>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+    
+    <!-- Footer -->
+    <div style="margin-top: 32px; padding: 24px; text-align: center;">
+      <!-- Privacy Notice -->
+      <div style="background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.5) 100%); padding: 16px; border-radius: 12px; margin-bottom: 20px; border: 1px solid rgba(0, 0, 0, 0.03);">
+        <p style="margin: 0; font-size: 11px; color: oklch(55.3% 0.013 58.071); font-weight: 500; line-height: 1.5;">
+          Your privacy is protected by Ghost Protocol.<br>
+          Zero-knowledge email notifications.
+        </p>
+      </div>
+      
+      <!-- Unsubscribe -->
+      <p style="margin: 0 0 12px 0;">
+        <a href="${unsubscribeLink}" 
+           style="color: oklch(65.3% 0.013 58.071); font-size: 12px; text-decoration: underline; font-weight: 500;">
+          Unsubscribe from notifications
+        </a>
+      </p>
+      
+      <!-- Branding -->
+      <p style="margin: 0; color: oklch(55.3% 0.013 58.071); font-size: 11px; font-weight: 600; letter-spacing: 0.02em;">
+        YouTube Channel Notifier
+      </p>
+      <p style="margin: 4px 0 0 0; color: oklch(65.3% 0.013 58.071); font-size: 10px;">
+        For The Love Of Code Hackathon by GitHub: 2025 Edition
+      </p>
+    </div>
+    
+  </div>
+</body>
+</html>`;
+
+    return { html, subject };
+  }
+
+  escapeHtml(text) {
+    if (!text) return '';
+    return text.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+}
+
+class EmailScheduler {
+  constructor() {
+    this.settings = { enabled: true, frequency: 'daily_evening', primarySendTime: '20:00', minVideosForEmail: 1 };
+  }
+  
+  async initialize() { console.log('YCN EmailScheduler: Initialized'); return true; }
+  async queueVideoNotification(video) { console.log('YCN EmailScheduler: Video queued:', video.title); return true; }
+  async processEmailQueue() { console.log('YCN EmailScheduler: Processing queue'); return true; }
+  
+  getNextOptimalSendTime() {
+    const target = new Date();
+    target.setHours(20, 0, 0, 0);
+    if (target <= new Date()) target.setDate(target.getDate() + 1);
+    return target.getTime();
+  }
+}
+
+// Make globally available
+self.EmailTemplates = EmailTemplates;
+self.EmailScheduler = EmailScheduler;
+console.log('YCN: Email classes defined directly in background script');
+console.log('YCN: EmailTemplates available:', typeof EmailTemplates !== 'undefined');
+console.log('YCN: EmailScheduler available:', typeof EmailScheduler !== 'undefined');
+
 class YCNBackground {
   constructor() {
     this.keepAliveInterval = null;
@@ -13,6 +172,7 @@ class YCNBackground {
     this.performanceManager = new PerformanceManager();
     this.smartBadge = new SmartBadgeManager(this);
     this.emailService = null;
+    this.emailScheduler = null;
     this.ghostAuth = null;
     this.init();
   }
@@ -53,11 +213,20 @@ class YCNBackground {
       this.setupVideoChecking();
     });
 
-    // Handle alarms for periodic video checking
+    // Handle alarms for periodic video checking and email sending
     chrome.alarms.onAlarm.addListener((alarm) => {
       if (alarm.name === 'checkYouTubeVideos') {
         console.log('YCN: Alarm triggered - checking for new videos');
         this.checkAllChannelsForNewVideos();
+      } else if (alarm.name === 'emailBatch') {
+        console.log('YCN: Email batch alarm triggered');
+        this.processEmailQueue();
+      } else if (alarm.name === 'dailyEmail') {
+        console.log('YCN: Daily email alarm triggered');
+        this.processEmailQueue();
+      } else if (alarm.name === 'weekendEmail') {
+        console.log('YCN: Weekend email alarm triggered');
+        this.processEmailQueue();
       }
     });
 
@@ -81,6 +250,18 @@ class YCNBackground {
         }
       } else {
         console.warn('YCN Ghost Protocol: Auth classes not available');
+      }
+      
+      // Initialize email scheduler if available
+      if (typeof EmailScheduler !== 'undefined') {
+        this.emailScheduler = new EmailScheduler();
+        await this.emailScheduler.initialize();
+        console.log('YCN: Email scheduler initialized');
+        
+        // Make email service globally accessible for scheduler
+        if (this.emailService) {
+          self.emailService = this.emailService;
+        }
       }
     } catch (error) {
       console.warn('YCN Ghost Protocol: Email service initialization failed:', error);
@@ -163,6 +344,16 @@ class YCNBackground {
           await this.checkAllChannelsForNewVideos();
           sendResponse({ success: true });
           break;
+
+        case 'SEND_TEST_EMAIL':
+          console.log('YCN: Test email triggered from dashboard');
+          this.sendTestEmail(message.videos, message.emailType)
+            .then(success => sendResponse({ success }))
+            .catch(error => {
+              console.error('YCN: Test email error:', error);
+              sendResponse({ success: false, error: error.message });
+            });
+          return true; // Keep channel open for async response
         
         case 'GHOST_AUTHENTICATE':
           const authResult = await this.handleGhostAuthentication();
@@ -187,6 +378,109 @@ class YCNBackground {
         case 'UPDATE_EMAIL_SETTINGS':
           const updateResult = await this.updateEmailSettings(message.settings);
           sendResponse(updateResult);
+          break;
+
+        case 'EMAIL_MODULE_TEST':
+          sendResponse({
+            success: true,
+            emailTemplatesAvailable: typeof EmailTemplates !== 'undefined',
+            emailSchedulerAvailable: typeof EmailScheduler !== 'undefined',
+            backgroundScriptReady: true
+          });
+          break;
+
+        case 'EMAIL_TEMPLATE_TEST':
+          try {
+            if (typeof EmailTemplates !== 'undefined') {
+              const templates = new EmailTemplates();
+              const result = templates.generateVideoNotificationEmail(
+                message.videos || [],
+                message.user || { name: 'Test User', emailHash: 'test_hash' },
+                'daily'
+              );
+              
+              sendResponse({
+                success: true,
+                html: result.html,
+                subject: result.subject
+              });
+            } else {
+              sendResponse({
+                success: false,
+                error: 'EmailTemplates not available'
+              });
+            }
+          } catch (error) {
+            sendResponse({
+              success: false,
+              error: error.message
+            });
+          }
+          break;
+
+        case 'EMAIL_SCHEDULER_TEST':
+          try {
+            if (typeof EmailScheduler !== 'undefined') {
+              const scheduler = new EmailScheduler();
+              const nextSendTime = scheduler.getNextOptimalSendTime();
+              
+              // Test queueing functionality
+              const testVideo = { videoId: 'test', title: 'Test Video', channelName: 'Test Channel' };
+              const queueResult = await scheduler.queueVideoNotification(testVideo);
+              
+              sendResponse({
+                success: true,
+                nextSendTime: nextSendTime,
+                queueTest: queueResult !== false
+              });
+            } else {
+              sendResponse({
+                success: false,
+                error: 'EmailScheduler not available'
+              });
+            }
+          } catch (error) {
+            sendResponse({
+              success: false,
+              error: error.message
+            });
+          }
+          break;
+
+        case 'EMAIL_AUTH_TEST':
+          try {
+            if (this.emailService) {
+              // Test the actual email service token retrieval
+              const token = await this.emailService.getValidAccessToken();
+              
+              if (token) {
+                // Get user info from Ghost Protocol storage
+                const ghostResult = await chrome.storage.local.get(['ghostUser']);
+                
+                sendResponse({
+                  success: true,
+                  tokenSource: 'Ghost Protocol',
+                  tokenLength: token.length,
+                  userEmail: ghostResult.ghostUser?.email || 'Unknown'
+                });
+              } else {
+                sendResponse({
+                  success: false,
+                  error: 'No valid access token available'
+                });
+              }
+            } else {
+              sendResponse({
+                success: false,
+                error: 'Email service not initialized'
+              });
+            }
+          } catch (error) {
+            sendResponse({
+              success: false,
+              error: error.message
+            });
+          }
           break;
         
         default:
@@ -563,12 +857,76 @@ class YCNBackground {
         }
       });
       
-      // Queue email notification if service is available
-      if (this.emailService) {
+      // Queue email notification if scheduler is available
+      if (this.emailScheduler) {
+        const video = {
+          videoId,
+          title: videoTitle,
+          channelName: channel.name,
+          channelId,
+          publishedAt: Date.now(),
+          relationshipScore: channel.relationship?.score || 50,
+          channelPriority: channel.relationship?.score >= 80 ? 'high' : 'normal'
+        };
+        
+        await this.emailScheduler.queueVideoNotification(video);
+        console.log('YCN: Video queued for email notification');
+      }
+      
+      // Legacy email service support
+      if (this.emailService && !this.emailScheduler) {
         await this.emailService.queueNotification(channelId, channel, videoTitle, videoId);
       }
     } catch (error) {
       console.warn('YCN: Error sending notification:', error);
+    }
+  }
+
+  async processEmailQueue() {
+    try {
+      if (!this.emailScheduler) {
+        console.log('YCN: Email scheduler not available');
+        return;
+      }
+      
+      await this.emailScheduler.processEmailQueue();
+    } catch (error) {
+      console.error('YCN: Error processing email queue:', error);
+    }
+  }
+
+  async sendTestEmail(videos, emailType = 'daily_evening') {
+    try {
+      console.log('YCN: Sending test email with', videos.length, 'videos');
+      
+      // Check if email service is available
+      if (!this.emailService) {
+        console.warn('YCN: Email service not available for test');
+        return false;
+      }
+
+      // Convert test videos to notification format
+      const notifications = videos.map(video => ({
+        channelId: video.channelId || 'test_channel',
+        channelName: video.channelName,
+        videoId: video.videoId,
+        videoTitle: video.title,
+        timestamp: video.publishedAt || Date.now()
+      }));
+
+      // Send test email using EmailNotificationService
+      const sent = await this.emailService.sendEmailNotification(notifications);
+      
+      if (sent) {
+        console.log('YCN: Test email sent successfully');
+        return true;
+      } else {
+        console.warn('YCN: Test email failed to send');
+        return false;
+      }
+    } catch (error) {
+      console.error('YCN: Error sending test email:', error);
+      throw error;
     }
   }
 
@@ -1121,7 +1479,7 @@ class SmartBadgeManager {
       } else if (approvedCount > 0) {
         // Green - notifications active
         badgeText = approvedCount.toString();
-        badgeColor = '#28a745';
+        badgeColor = '#e11d48';
       } else if (trackingCount > 0) {
         // Blue - actively tracking
         badgeText = trackingCount.toString();

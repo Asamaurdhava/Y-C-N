@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "YouTube Channel Notifier",
   "version": "1.0.0",
-  "description": "Smart YouTube notifications based on viewing behavior - Built for GitHub Hackathon by @specstan",
+  "description": "Smart YouTube notifications based on viewing behavior - Built for 'For The Love Of Code' Hackathon by GitHub: 2025 Edition. Developed by @atspecstan (https://x.com/atspecstan)",
   
   "permissions": [
     "storage",
@@ -16,7 +16,8 @@
     "client_id": "440708243624-95qh3upn1rejedp501nec674md33ksm3.apps.googleusercontent.com",
     "scopes": [
       "https://www.googleapis.com/auth/userinfo.email",
-      "https://www.googleapis.com/auth/userinfo.profile"
+      "https://www.googleapis.com/auth/userinfo.profile",
+      "https://www.googleapis.com/auth/gmail.send"
     ]
   },
   

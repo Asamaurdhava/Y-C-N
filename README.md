@@ -9,9 +9,41 @@
   
   **Intelligent YouTube notification system that learns from your viewing behavior**
   
-  [Features](#-features) • [Installation](#-installation-guide) • [Architecture](#-architecture) • [Privacy](#-privacy-&-security) • [Documentation](#-documentation)
+  [Features](#-features) • [Installation](#-quick-start-guide-for-judges) • [Architecture](#-architecture) • [Privacy](#-privacy) • [Judge Setup](JUDGE_SETUP.md) • [Testing Guide](TESTING_CHECKLIST.md)
   
 </div>
+
+---
+
+## 🏆 For GitHub Hackathon Judges
+
+### ⚡ **TL;DR Setup (2 minutes)**
+1. **Download** → Extract ZIP file
+2. **Chrome** → `chrome://extensions/` → Enable Developer mode → Load unpacked
+3. **Test** → Watch YouTube video → Check extension icon (counter increases)
+4. **Done** → Extension learns your behavior and sends smart notifications
+
+### 🎯 **Key Features to Evaluate**
+- **Smart Learning**: Only notifies about channels you actually watch (10+ videos, 60% completion)
+- **Privacy-First**: All data local, optional email with SHA-256 hashing  
+- **Real Analytics**: Relationship scoring, engagement tracking, visual dashboard
+- **Universal Browser**: Works on Chrome, Edge, Brave, Opera, Comet
+- **Zero Setup**: No API keys or accounts needed for core functionality
+
+### 🧪 **Quick Test Scenarios**
+1. **Behavior Tracking**: Watch 3 videos from same channel → Extension learns
+2. **Smart Notifications**: Manual check finds new videos → Browser notification 
+3. **Analytics Dashboard**: View engagement metrics and relationship scores
+4. **Video List Modal**: Click "X videos" button in dashboard → View detailed video list
+5. **Email System**: Optional OAuth setup for email notifications with privacy protection
+
+### 📁 **Repository Navigation**
+- `src/background/` → Core notification engine
+- `src/content/` → YouTube tracking algorithms  
+- `src/pages/` → Analytics dashboard & Ghost Protocol
+- `manifest.json` → Extension configuration
+- [`JUDGE_SETUP.md`](JUDGE_SETUP.md) → Detailed setup guide for judges
+- [`TESTING_CHECKLIST.md`](TESTING_CHECKLIST.md) → Testing scenarios and checklists
 
 ---
 
@@ -108,44 +140,37 @@ youtube-channel-notifier/
 - **Major Skip Detection**: Instantly disqualifies videos with >2min or >25% jumps
 - **Real-World Viewing**: Handles natural YouTube viewing patterns intelligently
 
-## 📦 Installation Guide
+## 📦 Quick Start Guide for Judges
 
-This extension has **two modes**: Basic YCN (browser notifications) and Ghost Protocol™ (email notifications). Follow the appropriate section based on your needs.
+### ⏱️ Time Required: 2-3 minutes
+
+**This extension works immediately after installation** - no OAuth or API keys needed for basic features!
 
 ---
 
-## 🚀 Part A: Basic YCN Installation (Browser Notifications Only)
+## 🚀 Part A: Basic Installation (Browser Notifications)
 
 ### Prerequisites
 - Chrome, Edge, Brave, or any Chromium browser (v88+)
-- 5 minutes of your time
-- **No OAuth setup required for basic features**
+- 2 minutes of your time
+- **No OAuth, API keys, or Google Cloud setup required**
 
 ### Step 1: Download & Install Extension
 
-#### Method 1: Quick Setup (Recommended)
-```bash
-# 1. Download the extension
-git clone [repository-url] youtube-channel-notifier
-cd youtube-channel-notifier
+#### Quick Installation Steps
 
-# 2. Open Chrome Extensions page
-# Paste this in your browser: chrome://extensions/
-```
+1. **Download the Extension**:
+   - Download the ZIP file from the repository
+   - Extract to a folder on your computer
+   - Note the folder location
 
-#### Method 2: Manual Steps
-1. **Download**: Clone or download the project files
-2. **Open Browser Extensions**:
-   - **Chrome/Edge/Brave**: Navigate to `chrome://extensions/`
-   - **Firefox**: Go to `about:debugging` → "This Firefox"
-   - **Safari**: Safari → Preferences → Advanced → Show Develop menu
-
-3. **Enable Developer Mode**: Toggle the switch in top-right corner
-
-4. **Load Extension**: 
+2. **Load the Extension**:
+   - Open Chrome/Edge/Brave
+   - Type `chrome://extensions/` in address bar
+   - Enable **Developer mode** (toggle in top-right)
    - Click **"Load unpacked"**
-   - Select the `youtube-channel-notifier` folder
-   - ✅ Extension loads with red YouTube icon in toolbar
+   - Select the extracted folder
+   - ✅ You'll see the red YouTube icon in your toolbar
 
 ### Step 2: Enable Browser Notifications
 
@@ -170,88 +195,69 @@ cd youtube-channel-notifier
 - **macOS**: System Preferences → Notifications & Focus → [Your Browser] → Allow notifications
 - **Linux**: Check your desktop environment's notification settings
 
-### Step 3: Start Using YCN
+### Step 3: Testing & Usage (For Judges)
 
-**🎉 You're Done!** The extension is now active and ready to learn from your YouTube behavior.
+**🎉 Installation Complete!** Here's how to quickly test the extension:
 
-**What happens next:**
-1. **Watch YouTube naturally** - No setup required
-2. **Extension learns** - Tracks channels you actually watch (10+ videos)
-3. **Get permission request** - Extension asks to enable notifications for channels you love
-4. **Receive smart notifications** - Only get notified about new videos from approved channels
+#### Quick Demo (1 minute):
+1. **Click the extension icon** → Should show "0 Channels Discovered"
+2. **Go to YouTube** and watch any video for 1+ minute (60% through)
+3. **Click extension icon again** → Counter should increase
+4. **Open Dashboard** → See analytics and tracked channels
 
-**Test it works:**
-- Click the extension icon → Should show "0 Channels Discovered" initially
-- Watch any YouTube video → Count increases automatically
-- No errors in browser console (F12)
+#### Full Demo (5 minutes):
+1. **Watch 2-3 videos from the same channel** (1+ minute each)
+2. **Extension will request permission** to notify about that channel
+3. **Click "Check for New Videos"** to test RSS monitoring
+4. **View notification** when new content is found
+
+#### Judge Testing Checklist:
+- ✅ Extension loads without errors
+- ✅ Tracks video watching behavior
+- ✅ Shows analytics dashboard
+- ✅ Requests notification permissions
+- ✅ Can manually check for new videos
+- ✅ Browser notifications work
 
 ---
 
-## 🔐 Part B: Ghost Protocol™ Setup (Email Notifications)
+## 🔐 Part B: Ghost Protocol™ (Email Notifications) - OPTIONAL
 
-**Optional Advanced Feature**: Get YouTube notifications via email with zero-knowledge privacy.
+**⚠️ Judges: This is OPTIONAL and requires Google Cloud OAuth setup (10+ minutes)**
 
-### When to use Ghost Protocol:
-- ✅ You want email notifications in addition to browser notifications
-- ✅ You use multiple devices and want unified notifications
-- ✅ You're interested in cutting-edge privacy technology
-- ❌ Skip this if you only want basic browser notifications
+### What is Ghost Protocol?
+- Email notifications with military-grade privacy
+- Your email is SHA-256 hashed and never stored
+- Requires OAuth setup for Gmail API access
 
-### Prerequisites for Ghost Protocol
-- Completed **Part A** (Basic YCN) above
-- Google account for OAuth authentication
-- Google Cloud Console access (free)
-- Additional 10 minutes for OAuth setup
+### Prerequisites for Email Features
+- Google Cloud Console account (free)
+- OAuth 2.0 client setup
+- Gmail API enabled
 
-### Step 1: Google Cloud OAuth Setup
+### OAuth Setup (Only if you want email features):
 
-**Why needed?** Ghost Protocol uses Google OAuth to verify email ownership, then immediately hashes and forgets your email address.
+1. **Google Cloud Console Setup**:
+   - Create project at https://console.cloud.google.com/
+   - Enable Gmail API
+   - Create OAuth 2.0 Client ID (Chrome Extension type)
+   - Add your extension ID to authorized origins
 
-#### Detailed OAuth Configuration:
-
-1. **Create Google Cloud Project**:
-   ```
-   → Go to: https://console.cloud.google.com/
-   → Click "New Project" or select existing project
-   → Note your Project ID for later
-   ```
-
-2. **Enable Required APIs**:
-   ```
-   → Navigate to "APIs & Services" → "Library"
-   → Search for "Google Identity API" or "Identity Toolkit API"
-   → Click "Enable"
+2. **Update manifest.json**:
+   ```json
+   "oauth2": {
+     "client_id": "YOUR_CLIENT_ID.apps.googleusercontent.com",
+     "scopes": [
+       "https://www.googleapis.com/auth/userinfo.email",
+       "https://www.googleapis.com/auth/userinfo.profile",
+       "https://www.googleapis.com/auth/gmail.send"
+     ]
+   }
    ```
 
-3. **Create OAuth 2.0 Credentials**:
-   ```
-   → Go to "APIs & Services" → "Credentials"
-   → Click "Create Credentials" → "OAuth client ID"
-   → Application type: "Web application"
-   → Name: "YouTube Channel Notifier"
-   ```
-
-4. **Configure Redirect URIs**:
-   ```
-   Important: You need your extension ID first!
-   
-   → Install extension first (Part A above)
-   → Go to chrome://extensions/ 
-   → Find "YouTube Channel Notifier"
-   → Copy the Extension ID (32-character string like: abcd...xyz)
-   
-   Then add redirect URI:
-   → https://[EXTENSION_ID].chromiumapp.org/
-   
-   Example: https://abcdefghijklmnopqrstuvwxyz123456.chromiumapp.org/
-   ```
-
-5. **Get Client ID**:
-   ```
-   → After creating, copy the "Client ID"
-   → Format: 123456789-abc123def456.apps.googleusercontent.com
-   → You'll need this for the next step
-   ```
+3. **Publish OAuth App** (to avoid scary warnings):
+   - In OAuth consent screen → Click "PUBLISH APP"
+   - This removes the "unverified app" warning
 
 ### Step 2: Update Extension Configuration
 
@@ -560,15 +566,16 @@ src/
 
 ## 📚 Documentation
 
-### User Guides
-- [Getting Started Guide](src/pages/guide.html)
-- [Technical Documentation](src/pages/documentation.html)
-- [Privacy Policy](src/pages/ghost-dashboard.html)
+### For Judges & Users
+- **[🏆 Judge Setup Guide](JUDGE_SETUP.md)** - Comprehensive 2-minute setup for hackathon judges
+- **[🧪 Testing Checklist](TESTING_CHECKLIST.md)** - Quick evaluation scenarios and success criteria
+- [Getting Started Guide](src/pages/guide.html) - In-app user guide
+- [Technical Documentation](src/pages/documentation.html) - Detailed technical reference
 
 ### Developer Resources
-- [API Reference](#-api-reference)
-- [Architecture Overview](#-architecture)
-- [Performance Guide](#-performance-metrics)
+- [API Reference](#-api-reference) - Background script and content script APIs
+- [Architecture Overview](#-architecture) - System design and component interaction
+- [Privacy Implementation](#-privacy--security) - Ghost Protocol and data protection
 
 ## 🚀 Roadmap
 
@@ -600,11 +607,11 @@ This software is proprietary and confidential. Unauthorized copying, distributio
 
 <div align="center">
   
-  **Developed by Vishesh Singh Rajput (specstan) with assistance from [Claude Code](https://www.anthropic.com/claude-code)**
+  **Developed by Vishesh Singh Rajput (specstan) with assistance from [Claude Code](https://claude.ai)**
   
   *A collaborative achievement combining human vision, creativity, and engineering expertise*
   *with Claude Code's AI-powered development capabilities for enhanced code quality and architecture*
   
-  [Report Issue](mailto:eruditevsr@gmail.com) • [Request Feature](mailto:eruditevsr@gmail.coms) • [Contact](mailto:eruditevsr@gmail.com)
+  [🏆 Judge Setup](JUDGE_SETUP.md) • [🧪 Testing Guide](TESTING_CHECKLIST.md) • [📧 Contact](mailto:specstan@example.com)
   
 </div>

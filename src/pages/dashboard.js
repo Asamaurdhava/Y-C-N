@@ -471,26 +471,14 @@ class YCNDashboard {
           
           ${watchedVideos.length > 0 ? `
             <div class="watched-videos-section">
-              <div class="section-label">
-                <span>Counted Videos (${watchedVideos.length})</span>
-                <button class="toggle-videos-btn" data-channel="${channelId}">
-                  <span class="toggle-icon">▼</span>
-                </button>
-              </div>
-              <div class="watched-videos-list" id="videos-${channelId}" style="display: none;">
-                ${watchedVideos.map((videoId, index) => {
-                  const videoData = channel.watchedVideoData && channel.watchedVideoData[videoId];
-                  const videoTitle = videoData ? videoData.title : videoId;
-                  return `
-                    <div class="watched-video-item">
-                      <span class="video-number">${index + 1}</span>
-                      <span class="video-title">${this.escapeHtml(videoTitle)}</span>
-                      ${channel.lastVideo && channel.lastVideo.id === videoId ? 
-                        `<span class="latest-badge">Latest</span>` : ''}
-                    </div>
-                  `;
-                }).join('')}
-              </div>
+              <div class="section-label">Counted Videos</div>
+              <button class="view-videos-btn" data-channel="${channelId}" data-channel-name="${this.escapeHtml(channel.name)}">
+                <span class="videos-count">${watchedVideos.length}</span>
+                <span class="videos-text">videos</span>
+                <svg class="view-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M9 18l6-6-6-6"/>
+                </svg>
+              </button>
             </div>
           ` : ''}
         </div>
@@ -595,22 +583,16 @@ class YCNDashboard {
   }
 
   attachChannelEventListeners() {
-    // Add toggle functionality for watched videos
-    document.querySelectorAll('.toggle-videos-btn').forEach(btn => {
+    // Add modal functionality for watched videos
+    document.querySelectorAll('.view-videos-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const channelId = btn.dataset.channel;
-        const videosList = document.getElementById(`videos-${channelId}`);
-        const toggleIcon = btn.querySelector('.toggle-icon');
+        const channelName = btn.dataset.channelName;
+        const channel = this.channels[channelId];
         
-        if (videosList) {
-          if (videosList.style.display === 'none') {
-            videosList.style.display = 'block';
-            toggleIcon.textContent = '▲';
-          } else {
-            videosList.style.display = 'none';
-            toggleIcon.textContent = '▼';
-          }
+        if (channel && channel.watchedVideos) {
+          this.showVideosModal(channelId, channelName, channel);
         }
       });
     });
@@ -1083,7 +1065,7 @@ class YCNDashboard {
         position: absolute;
         width: 4px;
         height: 4px;
-        background: linear-gradient(135deg, #28a745, #20c997);
+        background: linear-gradient(135deg, #e11d48, #be185d);
         border-radius: 50%;
         top: 50%;
         left: 50%;
@@ -1119,6 +1101,72 @@ class YCNDashboard {
         if (style.parentNode) style.remove();
       }, 1000);
     }
+  }
+
+  showVideosModal(channelId, channelName, channel) {
+    // Remove any existing modal
+    const existingModal = document.getElementById('videos-modal');
+    if (existingModal) existingModal.remove();
+    
+    const modal = document.createElement('div');
+    modal.id = 'videos-modal';
+    modal.className = 'videos-modal';
+    
+    const watchedVideos = channel.watchedVideos || [];
+    
+    modal.innerHTML = `
+      <div class="videos-modal-content">
+        <div class="videos-modal-header">
+          <h3>${this.escapeHtml(channelName)}</h3>
+          <p class="videos-modal-subtitle">Watched ${watchedVideos.length} videos</p>
+          <button class="close-modal-btn" id="close-videos-modal">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+        <div class="videos-modal-list">
+          ${watchedVideos.map((videoId, index) => {
+            const videoData = channel.watchedVideoData && channel.watchedVideoData[videoId];
+            const videoTitle = videoData ? videoData.title : videoId;
+            const isLatest = channel.lastVideo && channel.lastVideo.id === videoId;
+            return `
+              <div class="modal-video-item ${isLatest ? 'latest' : ''}">
+                <span class="modal-video-number">${index + 1}</span>
+                <span class="modal-video-title">${this.escapeHtml(videoTitle)}</span>
+                ${isLatest ? '<span class="modal-latest-badge">Latest</span>' : ''}
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Add event listeners
+    document.getElementById('close-videos-modal').addEventListener('click', () => {
+      modal.classList.add('fade-out');
+      setTimeout(() => modal.remove(), 300);
+    });
+    
+    // Close on background click
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.classList.add('fade-out');
+        setTimeout(() => modal.remove(), 300);
+      }
+    });
+    
+    // Close on Escape key
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        modal.classList.add('fade-out');
+        setTimeout(() => modal.remove(), 300);
+        document.removeEventListener('keydown', handleEscape);
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
   }
 
   showPermissionPrompt(channelId, channel) {

@@ -5,9 +5,9 @@ document.addEventListener('DOMContentLoaded', function() {
   if (guideNavBtn) {
     guideNavBtn.addEventListener('click', () => {
       if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL) {
-        chrome.tabs.create({ url: chrome.runtime.getURL('guide.html') });
+        chrome.tabs.create({ url: chrome.runtime.getURL('src/pages/guide.html') });
       } else {
-        window.open('guide.html', '_blank');
+        window.location.href = 'guide.html';
       }
     });
   }
@@ -16,9 +16,9 @@ document.addEventListener('DOMContentLoaded', function() {
   if (dashboardNavBtn) {
     dashboardNavBtn.addEventListener('click', () => {
       if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL) {
-        chrome.tabs.create({ url: chrome.runtime.getURL('dashboard.html') });
+        chrome.tabs.create({ url: chrome.runtime.getURL('src/pages/dashboard.html') });
       } else {
-        window.open('dashboard.html', '_blank');
+        window.location.href = 'dashboard.html';
       }
     });
   }
@@ -27,9 +27,9 @@ document.addEventListener('DOMContentLoaded', function() {
   if (viewGuideBtn) {
     viewGuideBtn.addEventListener('click', () => {
       if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL) {
-        chrome.tabs.create({ url: chrome.runtime.getURL('guide.html') });
+        chrome.tabs.create({ url: chrome.runtime.getURL('src/pages/guide.html') });
       } else {
-        window.open('guide.html', '_blank');
+        window.location.href = 'guide.html';
       }
     });
   }
@@ -38,9 +38,9 @@ document.addEventListener('DOMContentLoaded', function() {
   if (openDashboardBtn) {
     openDashboardBtn.addEventListener('click', () => {
       if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL) {
-        chrome.tabs.create({ url: chrome.runtime.getURL('dashboard.html') });
+        chrome.tabs.create({ url: chrome.runtime.getURL('src/pages/dashboard.html') });
       } else {
-        window.open('dashboard.html', '_blank');
+        window.location.href = 'dashboard.html';
       }
     });
   }

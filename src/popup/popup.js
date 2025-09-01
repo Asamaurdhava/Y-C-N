@@ -12,47 +12,45 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // Add check button after dashboard button
   const dashboardBtn = document.getElementById('openDashboard');
-  dashboardBtn.style.marginBottom = '6px'; // Reduce margin
+  const buttonsContainer = dashboardBtn.parentElement;
   
   const checkButton = document.createElement('button');
-  checkButton.textContent = '🔄 Check for New Videos';
-  checkButton.className = 'dashboard-btn'; // Use same styling
-  checkButton.style.cssText = `
-    width: calc(100% - 32px);
-    margin: 0 16px 8px;
-    padding: 8px;
-    background: #dc3545;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-  `;
+  checkButton.textContent = 'Check for New Videos';
+  checkButton.className = 'btn btn-check';
   
   checkButton.addEventListener('click', async () => {
+    const originalText = checkButton.textContent;
+    const originalClass = checkButton.className;
+    
     checkButton.textContent = 'Checking...';
     checkButton.disabled = true;
+    checkButton.style.opacity = '0.7';
     
     try {
       await chrome.runtime.sendMessage({ type: 'CHECK_NOW' });
       checkButton.textContent = 'Check Complete';
+      checkButton.style.background = 'linear-gradient(135deg, var(--ruby-500), var(--ruby-600))';
       setTimeout(() => {
-        checkButton.textContent = 'Check for New Videos';
+        checkButton.textContent = originalText;
         checkButton.disabled = false;
+        checkButton.className = originalClass;
+        checkButton.style.opacity = '';
+        checkButton.style.background = '';
       }, 2000);
     } catch (error) {
       checkButton.textContent = 'Check Failed';
       setTimeout(() => {
-        checkButton.textContent = 'Check for New Videos';
+        checkButton.textContent = originalText;
         checkButton.disabled = false;
+        checkButton.className = originalClass;
+        checkButton.style.opacity = '';
       }, 2000);
     }
   });
   
-  // Insert after dashboard button
-  dashboardBtn.parentNode.insertBefore(checkButton, dashboardBtn.nextSibling);
+  // Insert after Ghost Protocol button
+  const ghostBtn = document.getElementById('openGhostProtocol');
+  buttonsContainer.insertBefore(checkButton, ghostBtn.nextSibling);
 });
 
 async function updateCurrentVideo() {
@@ -65,39 +63,39 @@ async function updateCurrentVideo() {
                           currentTab.url.includes('youtube.com/watch');
     
     const contentDiv = document.getElementById('currentVideoContent');
-    const titleDiv = document.querySelector('.current-video-title');
+    const titleDiv = document.getElementById('currentVideoTitle');
     
     // Update the title and indicator based on status
     if (!isYouTube) {
       // Not on YouTube at all
       titleDiv.innerHTML = `
-        <span class="live-dot" style="background: #dc3545;"></span>
+        <span class="status-dot pulse-glow dot-red"></span>
         <span>Away from YouTube</span>
       `;
       contentDiv.innerHTML = `
-        <div class="no-video">
-          <div class="no-video-icon">💤</div>
-          <div>Open YouTube to start tracking</div>
+        <div class="empty-state">
+          <div class="empty-icon float">💤</div>
+          <div class="empty-text">Open YouTube to start tracking</div>
         </div>
       `;
       return;
     } else if (!isYouTubeVideo) {
       // On YouTube but not watching a video
       titleDiv.innerHTML = `
-        <span class="live-dot" style="background: #28a745;"></span>
+        <span class="status-dot pulse-glow dot-green"></span>
         <span>On YouTube</span>
       `;
       contentDiv.innerHTML = `
-        <div class="no-video">
-          <div class="no-video-icon">🏠</div>
-          <div>Browsing YouTube</div>
+        <div class="empty-state">
+          <div class="empty-icon float">🏠</div>
+          <div class="empty-text">Browsing YouTube</div>
         </div>
       `;
       return;
     } else {
       // Watching a video
       titleDiv.innerHTML = `
-        <span class="live-dot" style="background: #ffc107;"></span>
+        <span class="status-dot pulse-glow dot-yellow"></span>
         <span>Currently Playing</span>
       `;
     }
@@ -108,9 +106,9 @@ async function updateCurrentVideo() {
     
     if (!currentVideoId) {
       contentDiv.innerHTML = `
-        <div class="no-video">
-          <div class="no-video-icon">📺</div>
-          <div>No video currently playing</div>
+        <div class="empty-state">
+          <div class="empty-icon float">📺</div>
+          <div class="empty-text">No video currently playing</div>
         </div>
       `;
       return;
@@ -139,12 +137,12 @@ async function updateCurrentVideo() {
                                currentChannel.watchedVideos.includes(currentVideo.id);
       
       contentDiv.innerHTML = `
-        <div class="video-info">
+        <div class="video-card">
           <div class="video-title">${currentVideo.title}</div>
-          <div class="channel-name">
+          <div class="video-meta">
             <span>📺</span>
-            <span>${currentChannel.name}</span>
-            ${isAlreadyCounted ? '<span style="color: #28a745; margin-left: 8px;">Counted</span>' : ''}
+            <span class="video-channel">${currentChannel.name}</span>
+            ${isAlreadyCounted ? '<span class="status-badge badge-counted">✓ Counted</span>' : '<span class="status-badge badge-learning">⏱ Learning</span>'}
           </div>
         </div>
       `;
@@ -152,11 +150,11 @@ async function updateCurrentVideo() {
       // Video is playing but not tracked yet
       const videoTitle = currentTab.title.replace(' - YouTube', '');
       contentDiv.innerHTML = `
-        <div class="video-info">
+        <div class="video-card">
           <div class="video-title">${videoTitle}</div>
-          <div class="channel-name">
-            <span class="time-icon">●</span>
-            <span>Tracking in progress...</span>
+          <div class="video-meta">
+            <span class="status-dot pulse-glow dot-blue" style="width: 6px; height: 6px;"></span>
+            <span class="video-channel">Tracking in progress...</span>
           </div>
         </div>
       `;
@@ -164,17 +162,17 @@ async function updateCurrentVideo() {
   } catch (error) {
     console.warn('YCN: Error updating current video:', error);
     const contentDiv = document.getElementById('currentVideoContent');
-    const titleDiv = document.querySelector('.current-video-title');
+    const titleDiv = document.getElementById('currentVideoTitle');
     
     // Show offline/error state
     titleDiv.innerHTML = `
-      <span class="live-dot" style="background: #6c757d;"></span>
+      <span class="status-dot pulse-glow dot-gray"></span>
       <span>Status Unknown</span>
     `;
     contentDiv.innerHTML = `
-      <div class="no-video">
-        <div class="no-video-icon">❓</div>
-        <div>Unable to check status</div>
+      <div class="empty-state">
+        <div class="empty-icon float">❓</div>
+        <div class="empty-text">Unable to check status</div>
       </div>
     `;
   }
@@ -207,18 +205,18 @@ async function updateStats() {
       status.textContent = readyCount === 1 
         ? `💕 One channel wants to join your inner circle!`
         : `💕 ${readyCount} creators waiting to join your favorites!`;
-      status.style.color = '#ff0000';
+      status.className = 'status-text status-ready';
     } else if (approvedCount > 0) {
       status.textContent = approvedCount === 1
         ? `Your favorite creator will keep you posted!`
         : `${approvedCount} beloved channels in your inner circle!`;
-      status.style.color = '#00aa00';
+      status.className = 'status-text status-approved';
     } else if (channelCount > 0) {
       status.textContent = `Learning about your YouTube relationships...`;
-      status.style.color = '#0084FF';
+      status.className = 'status-text status-learning';
     } else {
       status.textContent = `👋 Your YouTube journey starts here!`;
-      status.style.color = '#6c757d';
+      status.className = 'status-text status-default';
     }
   } catch (error) {
     console.warn('YCN: Error updating popup stats:', error);
