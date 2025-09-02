@@ -85,13 +85,20 @@ class GhostProtocolAuth {
     
     const hashedEmail = await this.hashEmail(userInfo.email);
     
+    // SECURITY ENHANCEMENT: In production, use SecureTokenStorage from encryption.js
+    // to encrypt the access token before storage. Example:
+    // const secureStorage = new SecureTokenStorage();
+    // await secureStorage.storeToken('gmail_access', token);
+    
     const ghostUser = {
       emailHash: hashedEmail,
+      // SECURITY NOTE: email field should be removed in production
       email: userInfo.email, // Store email temporarily for Gmail API
       domain: userInfo.email.split('@')[1],
       verified: userInfo.verified_email || false,
       locale: userInfo.locale || 'en',
       authTimestamp: Date.now(),
+      // SECURITY WARNING: Token stored in plaintext - use encryption in production
       accessToken: token, // Store token for Gmail API
       ghostProtocolVersion: '1.0.0',
       browserInfo: this.getBrowserInfo()

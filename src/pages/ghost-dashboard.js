@@ -80,19 +80,31 @@ class GhostDashboard {
       max-width: 400px;
     `;
     
-    errorDiv.innerHTML = `
-      <div style="margin-bottom: 8px;">⚠️ Authentication Issue</div>
-      <div style="font-size: 14px; font-weight: 500; margin-bottom: 12px;">${message}</div>
-      <button onclick="this.parentElement.remove()" style="
-        background: rgba(255,255,255,0.2);
-        border: 1px solid rgba(255,255,255,0.3);
-        color: white;
-        padding: 6px 12px;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 12px;
-      ">Dismiss</button>
+    // Use safe DOM manipulation instead of innerHTML
+    const titleDiv = document.createElement('div');
+    titleDiv.style.marginBottom = '8px';
+    titleDiv.textContent = '⚠️ Authentication Issue';
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.style.cssText = 'font-size: 14px; font-weight: 500; margin-bottom: 12px;';
+    messageDiv.textContent = message; // Safe from XSS
+    
+    const dismissBtn = document.createElement('button');
+    dismissBtn.style.cssText = `
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
     `;
+    dismissBtn.textContent = 'Dismiss';
+    dismissBtn.onclick = () => errorDiv.remove();
+    
+    errorDiv.appendChild(titleDiv);
+    errorDiv.appendChild(messageDiv);
+    errorDiv.appendChild(dismissBtn);
     
     document.body.appendChild(errorDiv);
     

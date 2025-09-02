@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YCN Storage Viewer - Local Data Verification</title>
+  <link rel="icon" type="image/png" href="../assets/icons/icon16.png" sizes="16x16">
+  <link rel="icon" type="image/png" href="../assets/icons/icon32.png" sizes="32x32">
+  <link rel="icon" type="image/png" href="../assets/icons/icon48.png" sizes="48x48">
+  <link rel="icon" type="image/png" href="../assets/icons/icon128.png" sizes="128x128">
+  <style>
+    /* ========================================
+     * CSS RESET & VARIABLES (Ghost Protocol Style)
+     * ======================================== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    :root {
+      /* Primary Color System - Blue Theme */
+      --primary: #155dfc;
+      --primary-light: #4285f4;
+      --primary-lighter: #6ca0ff;
+      --primary-dark: #0d47d9;
+      --primary-bg: #f8faff;
+      
+      /* UI Colors */
+      --bg-primary: #ffffff;
+      --bg-secondary: #f8faff;
+      --bg-card: #ffffff;
+      --bg-section: #fdfdfe;
+      --border: #e8ebf7;
+      --border-light: #f1f4fd;
+      --border-accent: rgba(21, 93, 252, 0.15);
+      
+      /* Text Colors */
+      --text-primary: #1a1d29;
+      --text-secondary: #4a5578;
+      --text-muted: #6b7394;
+      --text-light: #9ca3c4;
+      --text-accent: var(--primary);
+      
+      /* Shadows & Effects */
+      --shadow-soft: 0 2px 8px rgba(21, 93, 252, 0.04);
+      --shadow-card: 0 4px 16px rgba(21, 93, 252, 0.06);
+      --shadow-elevated: 0 8px 32px rgba(21, 93, 252, 0.08);
+      --shadow-focus: 0 0 0 3px rgba(21, 93, 252, 0.1);
+      
+      /* Animation */
+      --ease-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      --transition: all 0.3s var(--ease-smooth);
+    }
+
+    /* ========================================
+     * BASE STYLES - Clean & Minimal
+     * ======================================== */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'SF Pro Display', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.5;
+      font-size: 15px;
+      font-weight: 400;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* Loading spinner */
+    .loading-spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--border-light);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+      margin-right: 8px;
+    }
+
+    /* ========================================
+     * RESPONSIVE DESIGN
+     * ======================================== */
+    @media (max-width: 768px) {
+      .container {
+        padding: 16px;
+        gap: 20px;
+      }
+
+      .header {
+        padding: 32px 20px 24px;
+      }
+
+      h1 {
+        font-size: clamp(2rem, 8vw, 2.5rem);
+      }
+
+      .subtitle {
+        font-size: 16px;
+      }
+
+      .data-section {
+        padding: 20px;
+      }
+
+      .section-title {
+        font-size: 18px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+
+      .data-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      .channels-container {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      .channel-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+
+      .stat-item {
+        padding: 12px;
+      }
+
+      .stat-value {
+        font-size: 20px;
+      }
+
+      .action-buttons {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      button, .btn-primary, .btn-secondary {
+        width: 100%;
+        padding: 12px;
+      }
+    }
+
+    @media (min-width: 1200px) {
+      .data-grid {
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      }
+
+      .channels-container {
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 28px;
+      }
+    }
+    @media (max-width: 480px) {
+      .container {
+        padding: clamp(12px, 4vw, 20px);
+        gap: clamp(16px, 3vw, 24px);
+      }
+
+      .header {
+        padding: 24px 16px 16px;
+      }
+      
+      h1 {
+        font-size: clamp(1.4rem, 8vw, 1.8rem);
+        flex-direction: column;
+        gap: 8px;
+      }
+      
+      h1::before {
+        font-size: 1.3em;
+      }
+      
+      .data-section {
+        padding: 20px 16px;
+        border-radius: 20px;
+        margin: 0 -4px;
+      }
+      
+      .data-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      .channels-container {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+
+      .channel-card {
+        padding: 24px 20px;
+        min-height: 240px;
+        border-radius: 20px;
+      }
+      
+      .channel-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+      
+      .stat-item {
+        padding: 16px 12px;
+      }
+
+      .stat-value {
+        font-size: 1.4rem;
+      }
+      
+      .action-buttons {
+        flex-direction: column;
+        gap: 12px;
+      }
+      
+      .glass-button {
+        width: 100%;
+        text-align: center;
+        padding: 14px 20px;
+        font-size: 0.9rem;
+      }
+    }
+
+    @media (min-width: 481px) and (max-width: 768px) {
+      .container {
+        padding: clamp(16px, 4vw, 24px);
+        gap: clamp(20px, 3vw, 32px);
+      }
+
+      .data-grid {
+        grid-template-columns: 1fr;
+        gap: 18px;
+      }
+
+      .channels-container {
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+
+      .channel-card {
+        padding: 28px 24px;
+        min-height: 260px;
+      }
+      
+      .channel-stats {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+      }
+      
+      .action-buttons {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 14px;
+      }
+    }
+
+    @media (min-width: 769px) and (max-width: 1024px) {
+      .data-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+      }
+
+      .channels-container {
+        grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+        gap: 28px;
+      }
+
+      .channel-card {
+        padding: 32px;
+        min-height: 270px;
+      }
+    }
+
+    @media (min-width: 1025px) and (max-width: 1440px) {
+      .data-grid {
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 24px;
+      }
+
+      .channels-container {
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 32px;
+      }
+    }
+
+    @media (min-width: 1441px) {
+      .container {
+        max-width: 1600px;
+      }
+
+      .data-grid {
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 28px;
+      }
+
+      .channels-container {
+        grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+        gap: 36px;
+      }
+
+      .channel-card {
+        padding: 40px;
+        min-height: 300px;
+      }
+    }
+
+    /* ========================================
+     * SECTION SPACING & ORGANIZATION
+     * ======================================== */
+    .section-group {
+      display: grid;
+      gap: 24px;
+    }
+
+    .data-section + .data-section {
+      margin-top: 0;
+    }
+    
+    /* ========================================
+     * KEYFRAMES & ANIMATIONS
+     * ======================================== */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @keyframes shimmer {
+      0% { 
+        background-position: -200% center;
+      }
+      100% { 
+        background-position: 200% center;
+      }
+    }
+    
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* ========================================
+     * HEADER SECTION - Elegant with Shimmer
+     * ======================================== */
+    .header {
+      text-align: center;
+      padding: 32px 32px 16px;
+      animation: fadeInUp 0.6s var(--ease-smooth);
+    }
+
+    h1 {
+      font-size: clamp(3.5rem, 8vw, 5.5rem);
+      font-weight: 900;
+      margin-bottom: 20px;
+      letter-spacing: -0.035em;
+      background: linear-gradient(
+        90deg,
+        var(--primary-dark) 0%,
+        var(--primary) 25%,
+        var(--primary-light) 50%,
+        var(--primary) 75%,
+        var(--primary-dark) 100%
+      );
+      background-size: 200% auto;
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: shimmer 3s linear infinite;
+      position: relative;
+      line-height: 1.1;
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 18px;
+      font-weight: 500;
+      max-width: 600px;
+      margin: 0 auto;
+      opacity: 0.9;
+    }
+
+    /* ========================================
+     * UNIQUE FLOATING SECTION SYSTEM
+     * ======================================== */
+    .data-section {
+      background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.05) 0%, 
+        rgba(21, 93, 252, 0.02) 100%
+      );
+      backdrop-filter: blur(40px) saturate(1.8);
+      border: 1px solid rgba(21, 93, 252, 0.1);
+      border-radius: 24px;
+      padding: 40px;
+      box-shadow: 
+        0 20px 60px rgba(21, 93, 252, 0.08),
+        0 8px 25px rgba(0, 0, 0, 0.04),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      transition: all 0.4s var(--ease-smooth);
+      animation: fadeInUp 0.8s var(--ease-smooth) backwards;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .data-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(circle at 70% 30%, rgba(21, 93, 252, 0.03) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 0.6s ease;
+      pointer-events: none;
+    }
+    
+    .data-section:nth-child(2) { animation-delay: 0.1s; }
+    .data-section:nth-child(3) { animation-delay: 0.2s; }
+    .data-section:nth-child(4) { animation-delay: 0.3s; }
+    .data-section:nth-child(5) { animation-delay: 0.4s; }
+    .data-section:nth-child(6) { animation-delay: 0.5s; }
+    
+    .data-section:hover {
+      background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.08) 0%, 
+        rgba(21, 93, 252, 0.04) 100%
+      );
+      box-shadow: 
+        0 32px 80px rgba(21, 93, 252, 0.12),
+        0 12px 40px rgba(0, 0, 0, 0.06),
+        inset 0 2px 0 rgba(255, 255, 255, 0.15);
+      transform: translateY(-8px) scale(1.01);
+      border-color: rgba(21, 93, 252, 0.2);
+    }
+
+    .data-section:hover::before {
+      opacity: 1;
+    }
+
+    .status-bar {
+      background: transparent;
+      padding: 8px 32px 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      animation: fadeInUp 0.6s var(--ease-smooth);
+      text-align: center;
+      margin-bottom: 0;
+    }
+
+    .status-indicator {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--primary);
+      animation: pulse 2s infinite;
+    }
+
+    #status-text {
+      color: var(--text-primary);
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      letter-spacing: -0.02em;
+    }
+
+    .badge {
+      background: var(--primary-bg);
+      color: var(--primary);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px solid var(--border-accent);
+      letter-spacing: 0.01em;
+    }
+
+    /* ========================================
+     * ELEGANT CARD SYSTEM
+     * ======================================== */
+    .data-grid {
+      display: grid;
+      gap: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      margin-top: 24px;
+    }
+
+    .data-item {
+      background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.1) 0%, 
+        rgba(21, 93, 252, 0.03) 100%
+      );
+      backdrop-filter: blur(20px) saturate(1.5);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 16px;
+      padding: 24px;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+      box-shadow: 
+        0 8px 32px rgba(21, 93, 252, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+
+    .data-item::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--primary), var(--primary-light));
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .data-item:hover {
+      background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.15) 0%, 
+        rgba(21, 93, 252, 0.05) 100%
+      );
+      border-color: rgba(21, 93, 252, 0.3);
+      box-shadow: 
+        0 12px 48px rgba(21, 93, 252, 0.1),
+        inset 0 2px 0 rgba(255, 255, 255, 0.2);
+      transform: translateY(-4px) scale(1.02);
+    }
+
+    .data-item:hover::before {
+      opacity: 1;
+    }
+
+    .data-key {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    .data-value {
+      font-size: 15px;
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Mono', Monaco, 'Courier New', monospace;
+      word-break: break-word;
+      font-weight: 500;
+      line-height: 1.4;
+    }
+
+    /* ========================================
+     * MODERN ATTRACTIVE CHANNEL CARDS
+     * ======================================== */
+    .channels-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 24px;
+      margin-top: 32px;
+    }
+
+    .channel-card {
+      background: linear-gradient(145deg, #ffffff 0%, #fafbff 100%);
+      border: 1px solid rgba(226, 232, 240, 0.8);
+      border-radius: 24px;
+      padding: 32px;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+    }
+
+    .channel-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(21, 93, 252, 0.08) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      pointer-events: none;
+    }
+
+    .channel-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #155dfc, #4285f4, #6ca0ff);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.4s ease;
+    }
+
+    .channel-card:hover {
+      transform: translateY(-6px) scale(1.02);
+      box-shadow: 0 20px 60px rgba(21, 93, 252, 0.15);
+      border-color: rgba(21, 93, 252, 0.2);
+    }
+
+    .channel-card:hover::before {
+      opacity: 1;
+    }
+
+    .channel-card:hover::after {
+      transform: scaleX(1);
+    }
+
+    .channel-header {
+      margin-bottom: 24px;
+    }
+
+    .channel-name {
+      font-weight: 700;
+      color: #1a1d29;
+      font-size: 20px;
+      letter-spacing: -0.03em;
+      line-height: 1.3;
+      margin: 0 0 8px 0;
+      background: linear-gradient(135deg, #1a1d29 0%, #4a5578 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .channel-id {
+      font-size: 12px;
+      color: #9ca3c4;
+      font-family: 'SF Mono', Monaco, monospace;
+      letter-spacing: 0.02em;
+    }
+
+    .channel-content {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .channel-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .stat-item {
+      text-align: center;
+      padding: 16px 8px;
+      background: linear-gradient(145deg, #f8faff 0%, #ffffff 100%);
+      border-radius: 16px;
+      border: 1px solid rgba(226, 232, 240, 0.5);
+      transition: all 0.3s ease;
+    }
+
+    .stat-item:hover {
+      background: linear-gradient(145deg, #ffffff 0%, #f0f4ff 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(21, 93, 252, 0.1);
+      border-color: rgba(21, 93, 252, 0.2);
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #155dfc 0%, #4285f4 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+      margin-bottom: 8px;
+      letter-spacing: -0.04em;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: #6b7394;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 600;
+      opacity: 0.8;
+    }
+
+    .channel-footer {
+      padding-top: 20px;
+      border-top: 1px solid rgba(226, 232, 240, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 8px;
+    }
+
+    .channel-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #4a5578;
+      font-weight: 500;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #48bb78;
+      animation: pulse 2s infinite;
+    }
+
+    .storage-info {
+      background: var(--primary-bg);
+      border: 1px solid var(--border-accent);
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 16px;
+    }
+
+    .storage-size {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--primary);
+      line-height: 1.2;
+    }
+
+    .json-viewer {
+      background: #1a1d29;
+      color: #e2e8f0;
+      padding: 20px;
+      border-radius: 12px;
+      font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      max-height: 500px;
+      overflow-y: auto;
+      margin-top: 16px;
+      border: 1px solid var(--border);
+    }
+
+    .json-viewer::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .json-viewer::-webkit-scrollbar-track {
+      background: #2d3748;
+      border-radius: 4px;
+    }
+
+    .json-viewer::-webkit-scrollbar-thumb {
+      background: var(--primary);
+      border-radius: 4px;
+    }
+
+    .json-viewer::-webkit-scrollbar-thumb:hover {
+      background: var(--primary-light);
+    }
+
+    /* ========================================
+     * CLEAN BUTTON SYSTEM
+     * ======================================== */
+    .action-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    button, .btn-primary, .btn-secondary {
+      background: var(--primary);
+      color: white;
+      border: 1px solid var(--primary);
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    button:hover, .btn-primary:hover {
+      background: var(--primary-dark);
+      border-color: var(--primary-dark);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--primary);
+      border: 1px solid var(--border-accent);
+    }
+
+    .btn-secondary:hover {
+      background: var(--primary-bg);
+      border-color: var(--primary);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .btn-danger {
+      background: #dc3545;
+      border-color: #dc3545;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #c82333;
+      border-color: #c82333;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+    }
+
+    /* Status messages */
+    .error {
+      background: #fef2f2;
+      color: #dc2626;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      border: 1px solid #fecaca;
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    .success {
+      color: #16a34a;
+      padding: 0;
+      margin-top: -12px;
+      margin-bottom: 16px;
+      font-weight: 500;
+      font-size: 14px;
+      text-align: center;
+      background: transparent;
+      border: none;
+    }
+
+    /* Loading spinner */
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .loading-spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+      margin-right: 8px;
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 24px;
+      margin-top: 48px;
+      border-top: 1px solid var(--border-light);
+      color: #1a1d29;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .footer strong {
+      color: #1a1d29;
+      font-weight: 700;
+    }
+
+    .footer em {
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>YCN Storage Viewer</h1>
+      <p class="subtitle">Verify and inspect local storage data on your device</p>
+    </div>
+
+    <div class="status-bar">
+      <div class="status-indicator"></div>
+      <span id="status-text">Connecting to extension storage...</span>
+    </div>
+
+    <div id="error-container"></div>
+    <div id="success-container"></div>
+
+    <!-- Storage Overview -->
+    <div class="data-section">
+      <h2 class="section-title">
+        Storage Overview
+        <span class="badge" id="storage-badge">Local</span>
+      </h2>
+      <div class="storage-info">
+        <div class="data-item">
+          <div class="data-key">Total Storage Size</div>
+          <div class="data-value storage-size" id="total-size">Calculating...</div>
+        </div>
+        <div class="data-grid" style="margin-top: 12px;">
+          <div class="data-item">
+            <div class="data-key">Storage Type</div>
+            <div class="data-value">chrome.storage.local</div>
+          </div>
+          <div class="data-item">
+            <div class="data-key">Data Location</div>
+            <div class="data-value">User's Local Device</div>
+          </div>
+          <div class="data-item">
+            <div class="data-key">Sync Status</div>
+            <div class="data-value">Not Synced (Local Only)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Channels Data -->
+    <div class="data-section">
+      <h2 class="section-title">
+        Tracked Channels
+        <span class="badge" id="channel-count">0</span>
+      </h2>
+      <div id="channels-container">
+        <p style="color: #718096;">Loading channel data...</p>
+      </div>
+    </div>
+
+    <!-- Session Data -->
+    <div class="data-section">
+      <h2 class="section-title">Session Intelligence</h2>
+      <div id="session-container">
+        <p style="color: #718096;">Loading session data...</p>
+      </div>
+    </div>
+
+    <!-- Raw Data Viewer -->
+    <div class="data-section">
+      <h2 class="section-title">Raw Storage Data</h2>
+      <div class="action-buttons">
+        <button class="btn-primary" id="refreshDataBtn">Refresh Data</button>
+        <button class="btn-secondary" id="exportDataBtn">Export JSON</button>
+        <button class="btn-secondary" id="toggleRawBtn">Toggle Raw View</button>
+      </div>
+      <div class="json-viewer" id="raw-data" style="display: none;">
+        <pre id="json-content">Loading...</pre>
+      </div>
+    </div>
+
+    <!-- Storage Keys -->
+    <div class="data-section">
+      <h2 class="section-title">Storage Keys Found</h2>
+      <div id="keys-container">
+        <p style="color: #718096;">Scanning storage keys...</p>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="data-section">
+      <h2 class="section-title">Storage Actions</h2>
+      <div class="action-buttons">
+        <button class="btn-primary" id="verifyIntegrityBtn">Verify Integrity</button>
+        <button class="btn-secondary" id="calculateSizeBtn">Calculate Size</button>
+        <button class="btn-danger" id="clearTestBtn">Clear Test Data</button>
+      </div>
+      <div id="storage-actions-message"></div>
+    </div>
+
+    <footer class="footer">
+      <strong><em>YouTube Channel Notifier</em></strong> - Built for <strong><em>'For The Love Of Code' Hackathon by GitHub: 2025 Edition</em></strong><br>
+      Developed by <strong><em>Vishesh Singh Rajput</em></strong>
+    </footer>
+  </div>
+
+  <script src="storage-viewer.js"></script>
+</body>
+</html>

@@ -62,7 +62,7 @@
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--primary-500);
 }
 
 .view-videos-btn:hover {
@@ -80,7 +80,8 @@
 .videos-text {
   font-size: 12px;
   font-weight: 500;
-  opacity: 0.8;
+  color: var(--primary-400);
+  opacity: 0.9;
 }
 
 .view-icon {
@@ -319,15 +320,26 @@
   100% { background-position: 0% 50%; }
 }
 
+@keyframes pulse-glow {
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px currentColor; }
+  50% { opacity: 0.4; box-shadow: 0 0 4px currentColor; }
+}
+
+@keyframes playingPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+@keyframes subtle-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.9; }
+}
+
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-8px); }
 }
 
-@keyframes pulse-glow {
-  0%, 100% { opacity: 1; box-shadow: 0 0 8px currentColor; }
-  50% { opacity: 0.4; box-shadow: 0 0 4px currentColor; }
-}
 
 /* Gradient Text Effects */
 .gradient-text {
@@ -446,7 +458,7 @@ body {
   border-radius: 50%;
   background: #00ff41;
   box-shadow: 0 0 20px #00ff41, 0 0 40px rgba(0, 255, 65, 0.6), 0 0 60px rgba(0, 255, 65, 0.3);
-  animation: pulse-glow 2s infinite;
+  animation: pulse-glow 2s ease-in-out infinite;
 }
 
 .stats-summary {
@@ -582,15 +594,14 @@ body {
   border: 1px solid var(--slate-200);
   border-radius: 12px;
   padding: 20px;
-  transition: all 0.3s ease;
   cursor: pointer;
 }
 
 .channel-card:hover {
   background: white;
   border-color: var(--primary-300);
-  box-shadow: var(--shadow);
-  transform: translateY(-1px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  transform: translateY(-3px);
 }
 
 .no-data {
@@ -740,20 +751,6 @@ body {
   gap: 20px;
 }
 
-.channel-card {
-  border: 1px solid var(--gray-border);
-  border-radius: 8px;
-  padding: 16px;
-  transition: all 0.2s ease;
-  background: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-}
-
-.channel-card:hover {
-  border-color: var(--primary-color);
-  box-shadow: 0 4px 16px rgba(255, 0, 0, 0.12);
-  transform: translateY(-1px);
-}
 
 .channel-card.ready {
   border-color: var(--success-color);
@@ -872,13 +869,8 @@ body {
   bottom: 0;
   width: 4px;
   background: linear-gradient(to bottom, var(--primary-color), var(--primary-dark));
-  animation: playingPulse 2s ease-in-out infinite;
 }
 
-@keyframes playingPulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
 
 .current-video-info {
   padding-left: 10px;
@@ -1021,7 +1013,6 @@ body {
   border-radius: 6px;
   font-size: 0.875rem;
   font-weight: 500;
-  animation: subtle-pulse 3s infinite;
 }
 
 .milestone-badge.ready {
@@ -1034,10 +1025,6 @@ body {
   color: white;
 }
 
-@keyframes subtle-pulse {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.05); opacity: 0.9; }
-}
 
 /* Channel Actions */
 .channel-actions {
@@ -1373,6 +1360,7 @@ body {
   0% { transform: translate(-50%, -50%) rotate(0deg); }
   100% { transform: translate(-50%, -50%) rotate(360deg); }
 }
+
 
 /* Ripple Effect Animation */
 @keyframes rippleExpand {

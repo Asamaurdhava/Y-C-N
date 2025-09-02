@@ -22,11 +22,12 @@
   },
   
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'"
+    "extension_pages": "script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https: data:; connect-src 'self' https://www.googleapis.com https://accounts.google.com https://www.youtube.com; object-src 'none'; frame-src 'none'; font-src 'self' data:; media-src 'none'; worker-src 'none'"
   },
   
   "host_permissions": [
-    "*://*.youtube.com/*"
+    "https://www.youtube.com/*",
+    "https://m.youtube.com/*"
   ],
   
   "background": {
@@ -35,7 +36,10 @@
   
   "content_scripts": [
     {
-      "matches": ["*://*.youtube.com/*"],
+      "matches": [
+        "https://www.youtube.com/*",
+        "https://m.youtube.com/*"
+      ],
       "js": ["src/content/content.js"],
       "run_at": "document_end"
     }
@@ -55,8 +59,16 @@
   
   "web_accessible_resources": [
     {
-      "resources": ["src/pages/dashboard.html", "src/utils/intelligence.js"],
-      "matches": ["*://*.youtube.com/*"]
+      "resources": [
+        "src/pages/dashboard.html",
+        "src/pages/storage-viewer.html",
+        "src/pages/storage-viewer.js",
+        "src/utils/intelligence.js"
+      ],
+      "matches": [
+        "https://www.youtube.com/*",
+        "https://m.youtube.com/*"
+      ]
     }
   ]
 }

@@ -9,7 +9,7 @@
   
   **Intelligent YouTube notification system that learns from your viewing behavior**
   
-  [Features](#-features) • [Installation](#-quick-start-guide-for-judges) • [Architecture](#-architecture) • [Privacy](#-privacy--security) • [Judge Setup](JUDGE_SETUP.md) • [Testing Guide](TESTING_CHECKLIST.md)
+  [Features](#-features) • [Installation](#-quick-start-guide-for-judges) • [Architecture](#-architecture) • [Privacy](#-privacy) • [Judge Setup](JUDGE_SETUP.md) • [Testing Guide](TESTING_CHECKLIST.md)
   
 </div>
 
@@ -24,7 +24,7 @@
 4. **Done** → Extension learns your behavior and sends smart notifications
 
 ### 🎯 **Key Features to Evaluate**
-- **Smart Learning**: Only notifies about channels you actually watch (10+ videos, 60% completion)
+- **Smart Learning**: Only notifies about channels you actually watch (10+ videos, 60% engagement score)
 - **Privacy-First**: All data local, optional email with SHA-256 hashing  
 - **Real Analytics**: Relationship scoring, engagement tracking, visual dashboard
 - **Universal Browser**: Works on Chrome, Edge, Brave, Opera, Comet
@@ -59,7 +59,7 @@ YouTube Channel Notifier is a sophisticated browser extension that revolutionize
 ### Our Solution
 - **Behavioral Learning**: Tracks actual viewing patterns, not just subscriptions
 - **Smart Thresholds**: Requires 10+ video views before enabling notifications
-- **60% Engagement Rule**: Must watch 60%+ of videos continuously (intelligent skip tolerance)
+- **Intelligent Engagement Scoring**: Uses advanced algorithm to measure genuine engagement
 - **Active Monitoring**: Checks RSS feeds every 30 minutes for truly new content
 - **Zero Noise**: Only notifies about channels you actively watch
 
@@ -134,11 +134,23 @@ youtube-channel-notifier/
 - Optimized RSS polling intervals
 
 ### Intelligent Engagement Algorithm
-- **60% Threshold**: Requires 60% continuous viewing (raised from 50%)
-- **Segment Tracking**: Accumulates multiple continuous viewing segments
-- **Smart Skip Tolerance**: Forgives intro/ad skips (<30s), allows up to 3 minor skips
-- **Major Skip Detection**: Instantly disqualifies videos with >2min or >25% jumps
-- **Real-World Viewing**: Handles natural YouTube viewing patterns intelligently
+
+The extension uses a sophisticated engagement-based algorithm to determine if a video counts as "watched":
+
+#### How It Works
+- **Engagement Score Calculation**: Tracks continuous viewing segments, not just total time
+- **60% Engagement Threshold**: Requires 60% engagement score (continuous watching)
+- **Minimum Watch Time**: At least 30 seconds of actual viewing required
+- **Smart Skip Detection**:
+  - **Ignored**: Small skips <30s (ads, intros)
+  - **Minor Skips**: 30-120s skips (allows up to 3)
+  - **Major Skips**: >120s or >25% of video (disqualifies the video)
+
+#### What Counts as a Watch
+✅ **Counts**: Watching 60% continuously, watching in segments that total 60%, skipping only ads/intros
+❌ **Doesn't Count**: Fast-forwarding through 60%, excessive skipping, major jumps in content
+
+This prevents gaming the system while accommodating natural viewing patterns like skipping sponsorships or intros.
 
 ## 📦 Quick Start Guide for Judges
 
@@ -201,7 +213,7 @@ youtube-channel-notifier/
 
 #### Quick Demo (1 minute):
 1. **Click the extension icon** → Should show "0 Channels Discovered"
-2. **Go to YouTube** and watch any video for 1+ minute (60% through)
+2. **Go to YouTube** and watch any video for 1+ minute (reach 60% engagement)
 3. **Click extension icon again** → Counter should increase
 4. **Open Dashboard** → See analytics and tracked channels
 
@@ -372,7 +384,7 @@ youtube-channel-notifier/
 - ✅ Try refreshing the extension and attempting again
 
 #### "Not tracking YouTube videos"
-- ✅ Watch videos for 30+ seconds (60% continuous engagement required)
+- ✅ Watch videos naturally (60% engagement score required, not just progress)
 - ✅ Small skips (<30s) are forgiven, major skips (>2min) disqualify the video
 - ✅ Check browser console for "YCN:" log messages
 - ✅ Ensure extension has permissions for `*://youtube.com/*`
@@ -403,7 +415,7 @@ graph LR
 |--------|--------|-------------|
 | View Frequency | 30% | Content consumption rate |
 | Recency | 20% | Time since last view |
-| Completion | 20% | Average 60%+ engagement per video |
+| Engagement | 20% | Average 60%+ engagement score per video |
 | Loyalty | 20% | Return visit consistency |
 | Trend | 10% | Engagement trajectory |
 
@@ -607,11 +619,11 @@ This software is proprietary and confidential. Unauthorized copying, distributio
 
 <div align="center">
   
-  **Developed by Vishesh Singh Rajput (specstan) with assistance from [Claude Code](https://www.anthropic.com/claude-code)**
+  **Developed by Vishesh Singh Rajput (specstan) with assistance from [Claude Code](https://claude.ai)**
   
   *A collaborative achievement combining human vision, creativity, and engineering expertise*
   *with Claude Code's AI-powered development capabilities for enhanced code quality and architecture*
   
-  [🏆 Judge Setup](JUDGE_SETUP.md) • [🧪 Testing Guide](TESTING_CHECKLIST.md) • [📧 Contact](mailto:eruditevsr@gmail.com)
+  [🏆 Judge Setup](JUDGE_SETUP.md) • [🧪 Testing Guide](TESTING_CHECKLIST.md) • [📧 Contact](mailto:specstan@example.com)
   
 </div>

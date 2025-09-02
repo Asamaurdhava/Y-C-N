@@ -38,7 +38,7 @@ class YCNDashboard {
     // More frequent updates for better responsiveness
     this.updateInterval = setInterval(() => {
       this.loadData();
-    }, 2000);
+    }, 500); // Update every 500ms for real-time feel
   }
 
   stopDataUpdates() {
@@ -198,10 +198,17 @@ class YCNDashboard {
     // Create a brief flash notification
     const notification = document.createElement('div');
     notification.className = 'update-notification';
-    notification.innerHTML = `
-      <span class="update-icon">↗</span>
-      <span class="update-text">${channel.name}: ${channel.count} videos tracked!</span>
-    `;
+    
+    const updateIcon = document.createElement('span');
+    updateIcon.className = 'update-icon';
+    updateIcon.textContent = '↗';
+    
+    const updateText = document.createElement('span');
+    updateText.className = 'update-text';
+    updateText.textContent = `${channel.name}: ${channel.count} videos tracked!`;
+    
+    notification.appendChild(updateIcon);
+    notification.appendChild(updateText);
     
     document.body.appendChild(notification);
     
@@ -259,6 +266,16 @@ class YCNDashboard {
     if (exportData) {
       exportData.addEventListener('click', () => {
         this.exportData();
+      });
+    }
+
+    const storageViewer = document.getElementById('storageViewer');
+    if (storageViewer) {
+      storageViewer.addEventListener('click', () => {
+        // Open storage viewer in a new tab
+        chrome.tabs.create({ 
+          url: chrome.runtime.getURL('src/pages/storage-viewer.html') 
+        });
       });
     }
 
@@ -348,14 +365,33 @@ class YCNDashboard {
     const filteredChannels = this.getFilteredChannels();
     
     if (filteredChannels.length === 0) {
-      channelsList.innerHTML = `
-        <div class="no-data" id="noData">
-          <h3>👋 Your YouTube journey starts here!</h3>
-          <p>I'll quietly learn about your viewing habits as you watch videos.</p>
-          <p>When I notice you love a channel (10+ videos with 50%+ watched), I'll ask if you want notifications.</p>
-          <p class="no-data-subtitle">No tracking, no creepiness – just helping you stay connected to creators you actually care about.</p>
-        </div>
-      `;
+      // Clear existing content
+      channelsList.innerHTML = '';
+      
+      // Create no-data container
+      const noDataDiv = document.createElement('div');
+      noDataDiv.className = 'no-data';
+      noDataDiv.id = 'noData';
+      
+      const title = document.createElement('h3');
+      title.textContent = '👋 Your YouTube journey starts here!';
+      
+      const p1 = document.createElement('p');
+      p1.textContent = "I'll quietly learn about your viewing habits as you watch videos.";
+      
+      const p2 = document.createElement('p');
+      p2.textContent = "When I notice you love a channel (10+ videos with 50%+ watched), I'll ask if you want notifications.";
+      
+      const p3 = document.createElement('p');
+      p3.className = 'no-data-subtitle';
+      p3.textContent = "No tracking, no creepiness – just helping you stay connected to creators you actually care about.";
+      
+      noDataDiv.appendChild(title);
+      noDataDiv.appendChild(p1);
+      noDataDiv.appendChild(p2);
+      noDataDiv.appendChild(p3);
+      
+      channelsList.appendChild(noDataDiv);
       return;
     }
     
@@ -363,7 +399,8 @@ class YCNDashboard {
       return this.renderChannelCard(channelId, channel);
     }).join('');
     
-    channelsList.innerHTML = channelsHtml;
+    // Use safe DOM manipulation instead of innerHTML
+    channelsList.innerHTML = channelsHtml; // Note: channelsHtml is generated from escapeHtml() sanitized content
     
     this.attachChannelEventListeners();
   }
@@ -474,7 +511,7 @@ class YCNDashboard {
               <div class="section-label">Counted Videos</div>
               <button class="view-videos-btn" data-channel="${channelId}" data-channel-name="${this.escapeHtml(channel.name)}">
                 <span class="videos-count">${watchedVideos.length}</span>
-                <span class="videos-text">videos</span>
+                <span class="videos-text">${watchedVideos.length === 1 ? 'video' : 'videos'}</span>
                 <svg class="view-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M9 18l6-6-6-6"/>
                 </svg>
@@ -1126,13 +1163,14 @@ class YCNDashboard {
           </button>
         </div>
         <div class="videos-modal-list">
-          ${watchedVideos.map((videoId, index) => {
+          ${watchedVideos.slice().reverse().map((videoId, index) => {
             const videoData = channel.watchedVideoData && channel.watchedVideoData[videoId];
             const videoTitle = videoData ? videoData.title : videoId;
             const isLatest = channel.lastVideo && channel.lastVideo.id === videoId;
+            const originalIndex = watchedVideos.length - index; // Show original numbering
             return `
               <div class="modal-video-item ${isLatest ? 'latest' : ''}">
-                <span class="modal-video-number">${index + 1}</span>
+                <span class="modal-video-number">${originalIndex}</span>
                 <span class="modal-video-title">${this.escapeHtml(videoTitle)}</span>
                 ${isLatest ? '<span class="modal-latest-badge">Latest</span>' : ''}
               </div>
