@@ -12,6 +12,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   await updateStats();
   await updateCurrentVideo();
   
+  // Auto-refresh every 2 seconds for real-time updates
+  setInterval(async () => {
+    try {
+      await updateCurrentVideo();
+      await updateStats();
+    } catch (error) {
+      console.log('YCN Popup: Auto-refresh error:', error);
+    }
+  }, 2000);
+  
   window.popupElements.openDashboard.addEventListener('click', () => {
     chrome.tabs.create({ url: chrome.runtime.getURL('src/pages/dashboard.html') });
   });
@@ -115,7 +125,7 @@ async function updateCurrentVideo() {
       `;
       return;
     } else {
-      // Watching a video
+      // Watching a video - will be updated with intelligent status
       titleDiv.innerHTML = `
         <span class="status-dot pulse-glow dot-yellow"></span>
         <span>Currently Playing</span>
@@ -153,10 +163,30 @@ async function updateCurrentVideo() {
     }
     
     if (currentVideo && currentChannel) {
+      // Get intelligent engagement data from content script
+      let engagementData = null;
+      try {
+        const response = await chrome.tabs.sendMessage(currentTab.id, { type: 'GET_ENGAGEMENT_STATUS' });
+        engagementData = response;
+      } catch (error) {
+        console.log('YCN Popup: Content script not ready for engagement data');
+      }
+      
       // Check if this video was already counted
       const watchedVideoData = currentChannel.watchedVideoData || {};
       const isAlreadyCounted = currentChannel.watchedVideos && 
                                currentChannel.watchedVideos.includes(currentVideo.id);
+      const crossDevice = watchedVideoData[currentVideo.id]?.crossDeviceDetected;
+      
+      // Generate intelligent status
+      const intelligentStatus = generateIntelligentStatus(engagementData, isAlreadyCounted, crossDevice);
+      
+      // Update title with intelligent status
+      const titleStatus = getIntelligentTitleStatus(engagementData, isAlreadyCounted);
+      titleDiv.innerHTML = `
+        <span class="status-dot pulse-glow ${titleStatus.dotClass}"></span>
+        <span>${titleStatus.text}</span>
+      `;
       
       contentDiv.innerHTML = `
         <div class="video-card">
@@ -164,8 +194,16 @@ async function updateCurrentVideo() {
           <div class="video-meta">
             <span>📺</span>
             <span class="video-channel">${currentChannel.name}</span>
-            ${isAlreadyCounted ? '<span class="status-badge badge-counted">✓ Counted</span>' : '<span class="status-badge badge-learning">⏱ Learning</span>'}
+            ${intelligentStatus.badge}
           </div>
+          ${intelligentStatus.progress ? `
+            <div class="engagement-progress">
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: ${intelligentStatus.progress}%"></div>
+              </div>
+              <div class="progress-text">${intelligentStatus.progressText}</div>
+            </div>
+          ` : ''}
         </div>
       `;
     } else {
@@ -198,6 +236,96 @@ async function updateCurrentVideo() {
       </div>
     `;
   }
+}
+
+function getIntelligentTitleStatus(engagementData, isAlreadyCounted) {
+  if (isAlreadyCounted) {
+    return { text: 'Video Counted ✓', dotClass: 'dot-green' };
+  }
+  
+  if (!engagementData || !engagementData.isTracking) {
+    return { text: 'Not Tracking', dotClass: 'dot-gray' };
+  }
+  
+  const { engagementScore = 0, videoPaused = false } = engagementData;
+  
+  if (videoPaused) {
+    return { text: 'Video Paused', dotClass: 'dot-yellow' };
+  }
+  
+  if (engagementScore >= 60) {
+    return { text: 'Ready to Count!', dotClass: 'dot-green' };
+  } else if (engagementScore >= 40) {
+    return { text: 'Almost There', dotClass: 'dot-blue' };
+  } else if (engagementScore >= 20) {
+    return { text: 'Building Progress', dotClass: 'dot-blue' };
+  } else {
+    return { text: 'Just Started', dotClass: 'dot-yellow' };
+  }
+}
+
+function generateIntelligentStatus(engagementData, isAlreadyCounted, crossDevice) {
+  if (isAlreadyCounted) {
+    return {
+      badge: `<span class="status-badge badge-counted">✓ Counted</span>`,
+      progress: null,
+      progressText: null
+    };
+  }
+  
+  if (!engagementData) {
+    return {
+      badge: `<span class="status-badge badge-learning">📊 Analyzing</span>`,
+      progress: null,
+      progressText: null
+    };
+  }
+  
+  const { 
+    engagementScore = 0, 
+    actualWatchedTime = 0, 
+    crossDeviceDetected = false,
+    sessionWatchedTime = 0,
+    isTracking = false,
+    skipped = 0
+  } = engagementData;
+  
+  // Use cross-device aware progress
+  const progress = Math.min(engagementScore, 100);
+  const watchedTime = crossDeviceDetected ? sessionWatchedTime : actualWatchedTime;
+  const deviceIcon = crossDeviceDetected ? '📱' : '💻';
+  
+  // Generate intelligent status based on progress
+  let badge, progressText;
+  
+  if (progress >= 60) {
+    badge = `<span class="status-badge badge-ready">${deviceIcon} Ready!</span>`;
+    progressText = `${progress.toFixed(1)}% watched • Qualifying for count`;
+  } else if (progress >= 40) {
+    badge = `<span class="status-badge badge-close">${deviceIcon} Close</span>`;
+    progressText = `${progress.toFixed(1)}% watched • ${(60 - progress).toFixed(1)}% more needed`;
+  } else if (progress >= 20) {
+    badge = `<span class="status-badge badge-progress">${deviceIcon} Tracking</span>`;
+    progressText = `${progress.toFixed(1)}% watched • ${watchedTime.toFixed(0)}s engaged`;
+  } else if (isTracking) {
+    badge = `<span class="status-badge badge-starting">${deviceIcon} Starting</span>`;
+    progressText = `${progress.toFixed(1)}% watched • Just started`;
+  } else {
+    badge = `<span class="status-badge badge-paused">⏸ Paused</span>`;
+    progressText = `${progress.toFixed(1)}% watched • Resume to continue`;
+  }
+  
+  // Add cross-device context
+  if (crossDeviceDetected && progress > 0) {
+    progressText += ' (desktop session)';
+  }
+  
+  // Add skip warning if excessive
+  if (skipped > 2) {
+    progressText += ` • ${skipped} skips`;
+  }
+  
+  return { badge, progress, progressText };
 }
 
 async function updateStats() {

@@ -61,14 +61,12 @@
   border: 1px solid rgba(225, 29, 72, 0.2);
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s ease;
   color: var(--primary-500);
 }
 
 .view-videos-btn:hover {
   background: linear-gradient(135deg, rgba(225, 29, 72, 0.12), rgba(225, 29, 72, 0.08));
   border-color: var(--primary-500);
-  transform: translateX(2px);
 }
 
 .videos-count {
@@ -91,7 +89,6 @@
 }
 
 .view-videos-btn:hover .view-icon {
-  transform: translateX(2px);
   opacity: 0.9;
 }
 
@@ -133,7 +130,7 @@
   flex-direction: column;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  animation: slideUp 0.3s ease;
+  opacity: 1;
 }
 
 .videos-modal-header {
@@ -236,6 +233,21 @@
   border-radius: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+.device-indicator {
+  font-size: 12px;
+  margin-left: 8px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  cursor: help;
+}
+
+.device-indicator.cross-device {
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
 }
 
 @keyframes fadeIn {
@@ -595,13 +607,14 @@ body {
   border-radius: 12px;
   padding: 20px;
   cursor: pointer;
+  position: relative;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .channel-card:hover {
   background: white;
   border-color: var(--primary-300);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 
 .no-data {
@@ -640,7 +653,6 @@ body {
 }
 
 .btn:hover {
-  transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
 
@@ -824,6 +836,12 @@ body {
   gap: 12px;
   margin-bottom: 16px;
   align-items: stretch;
+  pointer-events: none;
+}
+
+.channel-content button,
+.channel-content a {
+  pointer-events: auto;
 }
 
 .current-video-section,
@@ -1035,6 +1053,8 @@ body {
   padding-top: 12px;
   border-top: 1px solid #f0f0f0;
   justify-content: center;
+  position: relative;
+  z-index: 1;
 }
 
 /* Buttons */
@@ -1045,7 +1065,6 @@ body {
   cursor: pointer;
   font-size: 0.875rem;
   font-weight: 500;
-  transition: all 0.2s ease;
   text-decoration: none;
   display: inline-block;
   min-width: 120px;
@@ -1059,7 +1078,6 @@ body {
 }
 
 .primary-btn:hover {
-  transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(225, 29, 72, 0.3);
 }
 
@@ -1070,9 +1088,19 @@ body {
 }
 
 .secondary-btn:hover {
-  transform: translateY(-1px);
   background: linear-gradient(135deg, var(--slate-700), var(--slate-800));
   box-shadow: 0 4px 8px rgba(71, 85, 105, 0.3);
+}
+
+/* Remove all effects from Stop Tracking button specifically */
+.channel-actions .secondary-btn[data-action="remove"] {
+  transition: none !important;
+  transform: none !important;
+}
+
+.channel-actions .secondary-btn[data-action="remove"]:hover {
+  transform: none !important;
+  transition: none !important;
 }
 
 .danger-btn {
@@ -1081,7 +1109,6 @@ body {
 }
 
 .danger-btn:hover {
-  transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
 }
 
@@ -1118,7 +1145,7 @@ body {
   width: 90%;
   text-align: center;
   box-shadow: var(--shadow-lg);
-  animation: slideUp 0.3s ease;
+  opacity: 1;
 }
 
 .permission-icon {

@@ -343,7 +343,13 @@ class YCNBackground {
           break;
           
         case 'RECORD_VIDEO_WATCH':
-          const result = await this.recordVideoWatch(message.channelId, message.videoId, message.channelInfo, message.videoTitle);
+          const result = await this.recordVideoWatch(
+            message.channelId, 
+            message.videoId, 
+            message.channelInfo, 
+            message.videoTitle,
+            message.crossDeviceDetected
+          );
           sendResponse(result);
           break;
           
@@ -607,7 +613,7 @@ class YCNBackground {
     }
   }
 
-  async recordVideoWatch(channelId, videoId, channelInfo, videoTitle) {
+  async recordVideoWatch(channelId, videoId, channelInfo, videoTitle, crossDeviceDetected = false) {
     try {
       const result = await chrome.storage.local.get(['channels']);
       let channels = result.channels || {};
@@ -692,7 +698,8 @@ class YCNBackground {
         channels[channelId].watchedVideos.push(videoId);
         channels[channelId].watchedVideoData[videoId] = {
           title: videoTitle,
-          timestamp: Date.now()
+          timestamp: Date.now(),
+          crossDeviceDetected: crossDeviceDetected
         };
         channels[channelId].count++;
         
@@ -1528,7 +1535,7 @@ class YCNBackground {
       if (typeof PersonalAnalyticsEngine !== 'undefined') {
         this.analyticsEngine = new PersonalAnalyticsEngine();
         await this.analyticsEngine.initialize();
-        console.log('YCN Analytics: Engine initialized successfully');
+        // Note: Success message already logged by analytics engine
       } else {
         console.warn('YCN Analytics: PersonalAnalyticsEngine not available');
       }

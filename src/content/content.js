@@ -688,6 +688,28 @@
       }
     }
 
+    isDesktopBrowser() {
+      try {
+        const userAgent = navigator.userAgent.toLowerCase();
+        const screenWidth = window.screen.width;
+        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        
+        // Check if mobile/tablet user agents
+        const mobileKeywords = ['mobile', 'android', 'iphone', 'ipad', 'tablet', 'phone'];
+        const isMobileUA = mobileKeywords.some(keyword => userAgent.includes(keyword));
+        
+        // Desktop criteria: Not mobile UA + reasonable screen width + not primarily touch
+        const isDesktop = !isMobileUA && screenWidth >= 1024 && !isTouchDevice;
+        
+        console.log(`YCN: Device detection - Desktop: ${isDesktop}, Screen: ${screenWidth}px, Touch: ${isTouchDevice}`);
+        return isDesktop;
+      } catch (error) {
+        console.warn('YCN: Error detecting device type:', error);
+        // Default to true for desktop if detection fails
+        return true;
+      }
+    }
+
     async startTracking(videoId, channelId) {
       this.currentVideoId = videoId;
       this.currentChannelId = channelId;
@@ -704,15 +726,34 @@
       this.lastCheckTime = Date.now();
       this.initialVideoTime = 0; // Store where user started watching
       
+      // Session-based tracking for cross-device detection
+      this.sessionStartTime = 0; // Time in video when THIS session started
+      this.sessionWatchedTime = 0; // Time watched in THIS session only
+      this.crossDeviceDetected = false; // Flag for cross-device resume
+      
       const video = document.querySelector('video');
       if (video) {
         // **ENHANCED: Start tracking from current video position, not 00:00**
         this.initialVideoTime = video.currentTime; // Remember where user started watching
         this.lastVideoTime = video.currentTime;
         this.currentSegmentStart = video.currentTime; // Start segment from current position
+        this.sessionStartTime = video.currentTime; // Session starts from current position
         
         const startPosition = video.currentTime;
         const startPercentage = video.duration > 0 ? (startPosition / video.duration * 100) : 0;
+        
+        // Simple cross-device detection: Extension runs on desktop, any resume = cross-device
+        if (startPosition > 0) {
+          // Confirm we're on desktop browser
+          if (this.isDesktopBrowser()) {
+            // Video resumed = user watched on mobile/TV/other device first
+            this.crossDeviceDetected = true;
+            console.log(`YCN: 📱 Cross-device viewing detected - Video resumed at ${startPercentage.toFixed(1)}%`);
+            console.log(`YCN: Desktop session tracking started from ${startPosition.toFixed(1)}s onward`);
+          }
+        } else {
+          console.log(`YCN: 🆕 New video - Started from beginning on desktop`);
+        }
         
         console.log(`YCN: Tracking initialized at ${startPosition.toFixed(1)}s (${startPercentage.toFixed(1)}%) - ${startPosition > 0 ? 'RESUMED VIDEO' : 'NEW VIDEO'}`);
         
@@ -743,10 +784,13 @@
         if (this.progressCheckInterval) {
           clearInterval(this.progressCheckInterval);
         }
+        
+        // Optimized tracking interval (2s provides good balance of accuracy vs performance)
         this.progressCheckInterval = setInterval(() => {
           this.checkProgress();
         }, 2000);
-        console.log('YCN: Started progress tracking');
+        
+        console.log('YCN: Started optimized progress tracking (2s interval)');
       }
     }
 
@@ -843,67 +887,89 @@
         const now = Date.now();
         const timeSinceLastCheck = (now - this.lastCheckTime) / 1000;
         
-        // Skip detection
+        // Enhanced skip detection
         const videoTimeAdvanced = currentVideoTime - this.lastVideoTime;
-        const skipThreshold = timeSinceLastCheck + 0.5;
+        const skipThreshold = Math.max(timeSinceLastCheck * 2, 5); // More accurate threshold
+        const largeSkipThreshold = 30; // Detect chapter jumps/ad skips
         
-        if (videoTimeAdvanced > skipThreshold && videoTimeAdvanced > 2) {
-          // Automatic skip detected (video jumped forward automatically)
+        if (videoTimeAdvanced > skipThreshold && videoTimeAdvanced > 3) {
+          // Automatic skip detected (ads, buffering, or user skip)
           const skipDuration = videoTimeAdvanced - timeSinceLastCheck;
+          const isLargeSkip = videoTimeAdvanced > largeSkipThreshold;
           
-          console.log(`YCN: Automatic skip detected - ${skipDuration.toFixed(1)}s jump, continuing from current position: ${currentVideoTime.toFixed(1)}s`);
+          console.log(`YCN: ${isLargeSkip ? 'Large' : 'Auto'} skip detected - ${skipDuration.toFixed(1)}s jump, continuing from: ${currentVideoTime.toFixed(1)}s`);
           
-          // Record the segment that was watched before the skip
-          if (this.currentSegmentStart < this.lastVideoTime) {
+          // Record the watched segment before skip (only if meaningful duration)
+          if (this.currentSegmentStart < this.lastVideoTime && (this.lastVideoTime - this.currentSegmentStart) > 2) {
+            const segmentDuration = this.lastVideoTime - this.currentSegmentStart;
             this.continuousSegments.push({
               start: this.currentSegmentStart,
               end: this.lastVideoTime,
-              duration: this.lastVideoTime - this.currentSegmentStart
+              duration: segmentDuration
             });
+            
+            console.log(`YCN: Saved watched segment: ${segmentDuration.toFixed(1)}s`);
           }
           
-          // **NEW BEHAVIOR: Continue tracking from current position after automatic skip**
-          // Resume tracking from where the video is now, regardless of skip distance
+          // Resume tracking from current position
           this.currentSegmentStart = currentVideoTime;
           
-          console.log(`YCN: Tracking resumed from position: ${currentVideoTime.toFixed(1)}s (${(currentVideoTime/video.duration*100).toFixed(1)}%)`);
+          // Track skip for analytics (but don't penalize)
+          if (isLargeSkip) {
+            this.totalSkips++;
+          }
           
-          // Note: Removed skip penalty logic - now always continues from current position
+        } else if (videoTimeAdvanced < -2) {
+          // Rewind detected (more than 2s backward)
+          console.log(`YCN: Rewind detected - ${Math.abs(videoTimeAdvanced).toFixed(1)}s backward`);
           
-        } else if (videoTimeAdvanced < -1) {
-          // Rewind detected
-          console.log('YCN: Rewind detected');
-          if (this.currentSegmentStart < this.lastVideoTime) {
+          // Save current segment before rewind
+          if (this.currentSegmentStart < this.lastVideoTime && (this.lastVideoTime - this.currentSegmentStart) > 1) {
+            const segmentDuration = this.lastVideoTime - this.currentSegmentStart;
             this.continuousSegments.push({
               start: this.currentSegmentStart,
               end: this.lastVideoTime,
-              duration: this.lastVideoTime - this.currentSegmentStart
+              duration: segmentDuration
             });
+            console.log(`YCN: Saved segment before rewind: ${segmentDuration.toFixed(1)}s`);
           }
+          
+          // Start new segment from rewind position
           this.currentSegmentStart = currentVideoTime;
           
-        } else if (!video.paused && videoTimeAdvanced > 0) {
-          // Normal playback - only add positive time advancement
-          const timeWatched = Math.min(videoTimeAdvanced, timeSinceLastCheck);
-          if (timeWatched > 0) {
+        } else if (!video.paused && videoTimeAdvanced > 0 && videoTimeAdvanced <= skipThreshold) {
+          // Normal continuous playback
+          const timeWatched = Math.min(videoTimeAdvanced, timeSinceLastCheck * 1.2); // Allow slight buffer
+          
+          if (timeWatched > 0.1) { // Ignore micro-advances
             this.actualWatchedTime += timeWatched;
+            
+            // For cross-device videos, track session watching
+            if (this.crossDeviceDetected) {
+              this.sessionWatchedTime += timeWatched;
+            }
           }
         }
         
         // Calculate engagement
         const engagementScore = this.calculateEngagementScore(video.duration);
         
-        // Log status periodically
-        if (this.actualWatchedTime > 0 && Math.floor(this.actualWatchedTime) % 15 === 0) {
-          console.log(`YCN: Engagement: ${engagementScore.toFixed(1)}%, ` +
-                     `Watched: ${this.actualWatchedTime.toFixed(1)}s`);
+        // Optimized periodic logging (reduce frequency when close to threshold)
+        const shouldLog = this.actualWatchedTime > 0 && (
+          (engagementScore < 50 && Math.floor(this.actualWatchedTime) % 15 === 0) ||
+          (engagementScore >= 50 && Math.floor(this.actualWatchedTime) % 10 === 0)
+        );
+        
+        if (shouldLog) {
+          const watchedTime = this.crossDeviceDetected ? this.sessionWatchedTime : this.actualWatchedTime;
+          console.log(`YCN: Progress: ${engagementScore.toFixed(1)}% (${watchedTime.toFixed(1)}s watched)`);
         }
         
-        // Check threshold
-        if (engagementScore >= (this.watchThreshold * 100) && 
-            this.actualWatchedTime >= this.minWatchTime && 
-            !this.majorSkipsDetected &&
-            this.totalSkips <= 3) {
+        // Efficient threshold check with early validation
+        const hasMinTime = (this.crossDeviceDetected ? this.sessionWatchedTime : this.actualWatchedTime) >= this.minWatchTime;
+        const hasThreshold = engagementScore >= (this.watchThreshold * 100);
+        
+        if (hasThreshold && hasMinTime && !this.majorSkipsDetected && this.totalSkips <= 3) {
           
           console.log(`YCN: Threshold met! Score: ${engagementScore.toFixed(1)}%`);
           this.recordVideoWatch();
@@ -925,22 +991,39 @@
     }
 
     calculateEngagementScore(videoDuration) {
-      // Use actualWatchedTime for engagement calculation
-      // This represents the total time the user has actively watched
-      const engagementScore = (this.actualWatchedTime / videoDuration) * 100;
+      if (!videoDuration || videoDuration <= 0) return 0;
       
-      // **ENHANCED: Better logging for mid-video starts**
-      const startedMidVideo = this.initialVideoTime > 30; // Started more than 30s into video
-      const startPercentage = (this.initialVideoTime / videoDuration) * 100;
+      let engagementScore;
       
-      if (startedMidVideo && this.actualWatchedTime > 0 && Math.floor(this.actualWatchedTime) % 30 === 0) {
-        console.log(`YCN: Mid-video tracking - Started at ${startPercentage.toFixed(1)}%, ` +
-                   `watched ${this.actualWatchedTime.toFixed(1)}s, ` +
-                   `engagement ${engagementScore.toFixed(1)}% of total video duration`);
+      if (this.crossDeviceDetected) {
+        // Cross-device: Use actual watched time on desktop session only
+        engagementScore = (this.sessionWatchedTime / videoDuration) * 100;
+        
+        // Enhanced logging for cross-device
+        if (this.sessionWatchedTime > 0 && Math.floor(this.sessionWatchedTime) % 30 === 0) {
+          const video = document.querySelector('video');
+          const currentPos = video ? video.currentTime : 0;
+          const sessionSpan = currentPos - this.sessionStartTime;
+          
+          console.log(`YCN: 📱 Cross-device - Desktop watched: ${this.sessionWatchedTime.toFixed(1)}s/${videoDuration.toFixed(0)}s ` +
+                     `(${engagementScore.toFixed(1)}% engagement, ${sessionSpan.toFixed(1)}s session span)`);
+        }
+      } else {
+        // Desktop-only: Use total actual watched time
+        engagementScore = (this.actualWatchedTime / videoDuration) * 100;
+        
+        // Enhanced logging for desktop videos
+        if (this.actualWatchedTime > 0 && Math.floor(this.actualWatchedTime) % 30 === 0) {
+          const segmentCount = this.continuousSegments.length;
+          const totalSegmentTime = this.continuousSegments.reduce((sum, seg) => sum + seg.duration, 0);
+          
+          console.log(`YCN: 🆕 Desktop video - Watched: ${this.actualWatchedTime.toFixed(1)}s/${videoDuration.toFixed(0)}s ` +
+                     `(${engagementScore.toFixed(1)}% engagement, ${segmentCount} segments, ${totalSegmentTime.toFixed(1)}s total)`);
+        }
       }
       
-      // Cap the engagement score at 100%
-      return Math.min(engagementScore, 100);
+      // Precision: Cap at 100% and round to 1 decimal
+      return Math.min(Math.round(engagementScore * 10) / 10, 100);
     }
 
     // ========== Communication ==========
@@ -1017,7 +1100,8 @@
           channelId: currentChannelId,
           videoId: currentVideoId,
           channelInfo: channelInfo,
-          videoTitle: videoTitle
+          videoTitle: videoTitle,
+          crossDeviceDetected: this.crossDeviceDetected
         });
 
         if (response?.success) {
@@ -1285,6 +1369,40 @@
         
         // Create new tracker instance
         window.youtubeTracker = new YouTubeTracker();
+        
+        // Set up message listener for popup communication
+        chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+          if (message.type === 'GET_ENGAGEMENT_STATUS') {
+            try {
+              const tracker = window.youtubeTracker;
+              if (!tracker) {
+                sendResponse({ success: false, error: 'Tracker not available' });
+                return;
+              }
+              
+              const video = document.querySelector('video');
+              const engagementScore = video ? tracker.calculateEngagementScore(video.duration) : 0;
+              
+              sendResponse({
+                success: true,
+                engagementScore: engagementScore,
+                actualWatchedTime: tracker.actualWatchedTime || 0,
+                sessionWatchedTime: tracker.sessionWatchedTime || 0,
+                crossDeviceDetected: tracker.crossDeviceDetected || false,
+                isTracking: !!tracker.progressCheckInterval,
+                skipped: tracker.totalSkips || 0,
+                videoPaused: video ? video.paused : true,
+                currentTime: video ? video.currentTime : 0,
+                duration: video ? video.duration : 0,
+                watchThreshold: tracker.watchThreshold * 100,
+                minWatchTime: tracker.minWatchTime || 30
+              });
+            } catch (error) {
+              console.warn('YCN: Error getting engagement status:', error);
+              sendResponse({ success: false, error: error.message });
+            }
+          }
+        });
         
         // Mark initialization complete
         window.ycnInitialized = true;

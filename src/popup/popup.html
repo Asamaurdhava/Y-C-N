@@ -198,6 +198,71 @@
       color: var(--amber-500);
     }
     
+    .badge-ready {
+      background: rgba(34, 197, 94, 0.1);
+      color: #16a34a;
+      animation: pulse 2s infinite;
+    }
+    
+    .badge-close {
+      background: rgba(249, 115, 22, 0.1);
+      color: #ea580c;
+    }
+    
+    .badge-progress {
+      background: rgba(59, 130, 246, 0.1);
+      color: #3b82f6;
+    }
+    
+    .badge-starting {
+      background: rgba(156, 163, 175, 0.1);
+      color: #6b7280;
+    }
+    
+    .badge-paused {
+      background: rgba(107, 114, 128, 0.1);
+      color: #6b7280;
+    }
+    
+    /* Engagement Progress Bar */
+    .engagement-progress {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--slate-200);
+    }
+    
+    .progress-bar {
+      width: 100%;
+      height: 4px;
+      background: var(--slate-200);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 4px;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary-500), var(--primary-600));
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+    
+    .progress-fill.ready {
+      background: linear-gradient(90deg, #16a34a, #22c55e);
+    }
+    
+    .progress-text {
+      font-size: 11px;
+      color: var(--slate-600);
+      font-weight: 500;
+      line-height: 1.2;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.05); opacity: 0.9; }
+    }
+    
     /* Analytics Grid */
     .analytics-grid {
       padding: 0 16px 12px;

@@ -132,20 +132,29 @@ class YCNDashboard {
 
   updateRelationshipScores(channels) {
     try {
+      const now = Date.now();
+      const cacheTimeout = 5 * 60 * 1000; // 5 minutes
+      
       for (const [channelId, channel] of Object.entries(channels)) {
         if (channel.count > 0) {
-          const relationshipData = this.relationshipCalculator.calculateScore(channel);
+          // Check if we need to recalculate (cache for 5 minutes)
+          const lastUpdate = channel.relationship?.lastScoreUpdate || 0;
+          const needsUpdate = !channel.relationship || (now - lastUpdate) > cacheTimeout;
           
-          // Update the channel's relationship data
-          if (!channel.relationship) {
-            channel.relationship = {};
+          if (needsUpdate) {
+            const relationshipData = this.relationshipCalculator.calculateScore(channel);
+            
+            // Update the channel's relationship data
+            if (!channel.relationship) {
+              channel.relationship = {};
+            }
+            
+            channel.relationship.score = relationshipData.score;
+            channel.relationship.trend = relationshipData.trend;
+            channel.relationship.badge = relationshipData.badge;
+            channel.relationship.lastScoreUpdate = now;
+            channel.relationship.factors = relationshipData.factors;
           }
-          
-          channel.relationship.score = relationshipData.score;
-          channel.relationship.trend = relationshipData.trend;
-          channel.relationship.badge = relationshipData.badge;
-          channel.relationship.lastScoreUpdate = Date.now();
-          channel.relationship.factors = relationshipData.factors;
         }
       }
     } catch (error) {
@@ -1168,10 +1177,18 @@ class YCNDashboard {
             const videoTitle = videoData ? videoData.title : videoId;
             const isLatest = channel.lastVideo && channel.lastVideo.id === videoId;
             const originalIndex = watchedVideos.length - index; // Show original numbering
+            const crossDevice = videoData && videoData.crossDeviceDetected;
+            
+            let deviceIndicator = '';
+            if (crossDevice) {
+              deviceIndicator = '<span class="device-indicator cross-device" title="Started on mobile/other device, completed on desktop">📱</span>';
+            }
+            
             return `
               <div class="modal-video-item ${isLatest ? 'latest' : ''}">
                 <span class="modal-video-number">${originalIndex}</span>
                 <span class="modal-video-title">${this.escapeHtml(videoTitle)}</span>
+                ${deviceIndicator}
                 ${isLatest ? '<span class="modal-latest-badge">Latest</span>' : ''}
               </div>
             `;

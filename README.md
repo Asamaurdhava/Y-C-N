@@ -25,8 +25,11 @@
 
 ### 🎯 **Key Features to Evaluate**
 - **Smart Learning**: Only notifies about channels you actually watch (10+ videos, 60% engagement score)
+- **Cross-Device Intelligence**: Detects mobile viewing, only counts desktop engagement for notifications
+- **Real-Time Engagement**: Intelligent popup shows live progress with device-aware tracking
 - **Privacy-First**: All data local, optional email with SHA-256 hashing  
 - **Real Analytics**: Relationship scoring, engagement tracking, visual dashboard
+- **Expert Dashboard Tools**: Data export (JSON/CSV/OPML/URLs), storage viewer, 5-factor relationship intelligence with caching
 - **Universal Browser**: Works on Chrome, Edge, Brave, Opera, Comet
 - **Zero Setup**: No API keys or accounts needed for core functionality
 
@@ -81,6 +84,8 @@ YouTube Channel Notifier is a sophisticated browser extension that revolutionize
 - Real-time engagement metrics and trends
 - Visual status indicators for channel health
 - Session intelligence with viewing insights
+- 5-factor relationship scoring with performance caching
+- Expert tools: storage viewer and advanced analytics
 
 #### 💾 **Data Export Options**
 - **JSON** - Complete data backup
@@ -125,11 +130,13 @@ youtube-channel-notifier/
 - **Monitoring**: YouTube RSS Feeds
 - **Authentication**: OAuth 2.0 + Chrome Identity API
 - **Privacy**: SHA-256 Cryptographic Hashing
+- **Intelligence**: 5-factor relationship scoring with user profiling
+- **Analytics**: Export tools (JSON/CSV/OPML/URLs) and storage inspection
 
 ### Performance Optimizations
 - Debounced storage operations
 - Efficient memory management
-- Smart caching strategies
+- Smart caching strategies (5-minute relationship score caching)
 - Automatic cleanup routines
 - Optimized RSS polling intervals
 
