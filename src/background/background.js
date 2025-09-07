@@ -6,6 +6,14 @@ try {
   console.warn('YCN Ghost Protocol: Could not load auth module:', error);
 }
 
+// Import analytics engine
+try {
+  importScripts('../utils/analytics-engine.js');
+  console.log('YCN Analytics: Engine loaded');
+} catch (error) {
+  console.warn('YCN Analytics: Could not load analytics engine:', error);
+}
+
 // Define email modules directly in background script (most reliable approach)
 class EmailTemplates {
   generateVideoNotificationEmail(videos, user, type = 'daily') {
@@ -14,7 +22,7 @@ class EmailTemplates {
     
     // Generate unsubscribe link - using mailto as a fallback since chrome-extension URLs don't work in emails
     // You can replace this with your own web-based unsubscribe page if you have one
-    const unsubscribeLink = `mailto:${user?.email || 'eruditevsr@gmail.com'}?subject=Unsubscribe from YouTube Channel Notifier&body=Please unsubscribe me from email notifications.`;
+    const unsubscribeLink = `mailto:${user?.email || 'noreply@example.com'}?subject=Unsubscribe from YouTube Channel Notifier&body=Please unsubscribe me from email notifications.`;
     
     const html = `<!DOCTYPE html>
 <html>
@@ -65,8 +73,8 @@ class EmailTemplates {
               <tr>
                 <td width="140" valign="top">
                   <!-- Thumbnail with glass effect -->
-                  <a href="https://www.youtube.com/watch?v=${video.videoId}" style="display: block; position: relative;">
-                    <img src="https://img.youtube.com/vi/${video.videoId}/mqdefault.jpg" 
+                  <a href="https://www.youtube.com/watch?v=${this.sanitizeVideoId(video.videoId)}" style="display: block; position: relative;">
+                    <img src="https://img.youtube.com/vi/${this.sanitizeVideoId(video.videoId)}/mqdefault.jpg" 
                          alt="${this.escapeHtml(video.title)}"
                          width="120" height="67"
                          style="display: block; border-radius: 12px; object-fit: cover; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); border: 1px solid rgba(255, 255, 255, 0.3);">
@@ -82,14 +90,14 @@ class EmailTemplates {
                   
                   <!-- Video Title -->
                   <h2 style="margin: 0 0 12px 0; font-size: 16px; font-weight: 600; color: #1a202c; line-height: 1.4; letter-spacing: -0.01em;">
-                    <a href="https://www.youtube.com/watch?v=${video.videoId}" 
+                    <a href="https://www.youtube.com/watch?v=${this.sanitizeVideoId(video.videoId)}" 
                        style="color: #1a202c; text-decoration: none;">
                       ${this.escapeHtml(video.title || 'Untitled Video')}
                     </a>
                   </h2>
                   
                   <!-- Watch Button with glassmorphism -->
-                  <a href="https://www.youtube.com/watch?v=${video.videoId}" 
+                  <a href="https://www.youtube.com/watch?v=${this.sanitizeVideoId(video.videoId)}" 
                      style="display: inline-block; padding: 10px 20px; background: linear-gradient(135deg, oklch(55.3% 0.013 58.071) 0%, oklch(45.3% 0.013 58.071) 100%); color: white; text-decoration: none; border-radius: 12px; font-size: 13px; font-weight: 600; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1); letter-spacing: 0.01em;">
                     Watch Video →
                   </a>
@@ -137,7 +145,25 @@ class EmailTemplates {
 
   escapeHtml(text) {
     if (!text) return '';
-    return text.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    if (typeof text !== 'string') {
+      text = String(text);
+    }
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#x27;')
+      .replace(/\//g, '&#x2F;')
+      .replace(/`/g, '&#x60;')
+      .replace(/=/g, '&#x3D;');
+  }
+  
+  // Sanitize URL parameters
+  sanitizeVideoId(videoId) {
+    if (!videoId) return '';
+    // YouTube video IDs are alphanumeric, underscore, and hyphen only
+    return videoId.replace(/[^a-zA-Z0-9_-]/g, '');
   }
 }
 
@@ -174,6 +200,7 @@ class YCNBackground {
     this.emailService = null;
     this.emailScheduler = null;
     this.ghostAuth = null;
+    this.analyticsEngine = null;
     this.init();
   }
 
@@ -198,6 +225,12 @@ class YCNBackground {
 
     // Keep service worker alive
     this.startKeepAlive();
+    
+    // Initialize data cleanup
+    this.initDataRetention();
+    
+    // Initialize analytics engine
+    this.initAnalytics();
 
     // Handle service worker startup
     chrome.runtime.onStartup.addListener(() => {
@@ -424,9 +457,7 @@ class YCNBackground {
               const scheduler = new EmailScheduler();
               const nextSendTime = scheduler.getNextOptimalSendTime();
               
-              // Test queueing functionality
-              const testVideo = { videoId: 'test', title: 'Test Video', channelName: 'Test Channel' };
-              const queueResult = await scheduler.queueVideoNotification(testVideo);
+              // Production-ready queueing functionality initialized
               
               sendResponse({
                 success: true,
@@ -480,6 +511,26 @@ class YCNBackground {
               success: false,
               error: error.message
             });
+          }
+          break;
+        
+        case 'ANALYTICS_GET_DATA':
+          try {
+            const analyticsData = await this.getAnalyticsData(message.timeRange);
+            sendResponse({ success: true, data: analyticsData });
+          } catch (error) {
+            console.warn('YCN Analytics: Error getting data:', error);
+            sendResponse({ success: false, error: error.message });
+          }
+          break;
+        
+        case 'ANALYTICS_EXPORT':
+          try {
+            const exportData = await this.exportAnalyticsData(message.format, message.timeRange);
+            sendResponse({ success: true, data: exportData });
+          } catch (error) {
+            console.warn('YCN Analytics: Error exporting data:', error);
+            sendResponse({ success: false, error: error.message });
           }
           break;
         
@@ -1357,6 +1408,190 @@ class YCNBackground {
     } catch (error) {
       console.warn(`YCN: Error checking RSS for channel ${channelId}:`, error);
     }
+  }
+  
+  // ========== Data Retention Management ==========
+  
+  initDataRetention() {
+    // Run cleanup immediately, then every 24 hours
+    this.cleanupOldData();
+    setInterval(() => {
+      this.cleanupOldData();
+    }, 24 * 60 * 60 * 1000); // 24 hours
+  }
+  
+  async cleanupOldData() {
+    try {
+      console.log('YCN: Starting data cleanup...');
+      
+      const now = Date.now();
+      const maxAge = 90 * 24 * 60 * 60 * 1000; // 90 days
+      const maxWatchedVideos = 1000; // Max watched videos per channel
+      
+      // Get current data
+      const result = await chrome.storage.local.get(['channels']);
+      const channels = result.channels || {};
+      let cleaned = false;
+      
+      for (const channelId in channels) {
+        const channel = channels[channelId];
+        
+        // Clean old watched videos
+        if (channel.watchedVideos && Array.isArray(channel.watchedVideos)) {
+          const originalLength = channel.watchedVideos.length;
+          
+          // Keep only recent videos and limit total count
+          if (originalLength > maxWatchedVideos) {
+            channel.watchedVideos = channel.watchedVideos.slice(-maxWatchedVideos);
+            cleaned = true;
+            console.log(`YCN: Trimmed ${channelId} watched videos from ${originalLength} to ${channel.watchedVideos.length}`);
+          }
+        }
+        
+        // Clean old video history
+        if (channel.videos && Array.isArray(channel.videos)) {
+          const originalLength = channel.videos.length;
+          channel.videos = channel.videos.filter(video => {
+            const age = now - (video.publishedAt || video.timestamp || 0);
+            return age < maxAge;
+          });
+          
+          if (channel.videos.length !== originalLength) {
+            cleaned = true;
+            console.log(`YCN: Cleaned ${channelId} video history from ${originalLength} to ${channel.videos.length} items`);
+          }
+        }
+        
+        // Clean old session data
+        if (channel.lastCheck && (now - channel.lastCheck) > maxAge) {
+          delete channel.currentVideo;
+          cleaned = true;
+        }
+      }
+      
+      // Clean up orphaned data
+      const ghostUser = await chrome.storage.local.get(['ghostUser']);
+      if (ghostUser.ghostUser && ghostUser.ghostUser.authTimestamp) {
+        const authAge = now - ghostUser.ghostUser.authTimestamp;
+        const maxAuthAge = 180 * 24 * 60 * 60 * 1000; // 180 days
+        
+        if (authAge > maxAuthAge) {
+          console.log('YCN: Cleaning expired auth data');
+          await chrome.storage.local.remove(['ghostUser', 'authStatus']);
+          cleaned = true;
+        }
+      }
+      
+      // Save cleaned data
+      if (cleaned) {
+        await chrome.storage.local.set({ channels });
+        console.log('YCN: Data cleanup completed with changes');
+      } else {
+        console.log('YCN: Data cleanup completed, no changes needed');
+      }
+      
+    } catch (error) {
+      console.error('YCN: Error during data cleanup:', error);
+    }
+  }
+  
+  async getStorageStats() {
+    try {
+      const result = await chrome.storage.local.get(null);
+      const channels = result.channels || {};
+      
+      let totalVideos = 0;
+      let totalWatchedVideos = 0;
+      let channelCount = Object.keys(channels).length;
+      
+      for (const channelId in channels) {
+        const channel = channels[channelId];
+        if (channel.videos) totalVideos += channel.videos.length;
+        if (channel.watchedVideos) totalWatchedVideos += channel.watchedVideos.length;
+      }
+      
+      return {
+        channelCount,
+        totalVideos,
+        totalWatchedVideos,
+        storageKeys: Object.keys(result).length
+      };
+    } catch (error) {
+      console.error('YCN: Error getting storage stats:', error);
+      return null;
+    }
+  }
+  
+  // Analytics methods
+  async initAnalytics() {
+    try {
+      if (typeof PersonalAnalyticsEngine !== 'undefined') {
+        this.analyticsEngine = new PersonalAnalyticsEngine();
+        await this.analyticsEngine.initialize();
+        console.log('YCN Analytics: Engine initialized successfully');
+      } else {
+        console.warn('YCN Analytics: PersonalAnalyticsEngine not available');
+      }
+    } catch (error) {
+      console.error('YCN Analytics: Failed to initialize:', error);
+    }
+  }
+  
+  async getAnalyticsData(timeRange = '7d') {
+    if (!this.analyticsEngine) {
+      throw new Error('Analytics engine not initialized');
+    }
+    
+    try {
+      const data = await this.analyticsEngine.generateAnalyticsReport(timeRange);
+      return data;
+    } catch (error) {
+      console.error('YCN Analytics: Error getting data:', error);
+      throw error;
+    }
+  }
+  
+  async exportAnalyticsData(format = 'json', timeRange = '7d') {
+    if (!this.analyticsEngine) {
+      throw new Error('Analytics engine not initialized');
+    }
+    
+    try {
+      const data = await this.analyticsEngine.generateAnalyticsReport(timeRange);
+      
+      if (format === 'csv') {
+        return this.convertToCSV(data);
+      } else {
+        return data;
+      }
+    } catch (error) {
+      console.error('YCN Analytics: Error exporting data:', error);
+      throw error;
+    }
+  }
+  
+  convertToCSV(data) {
+    const csvRows = [];
+    
+    // Add headers
+    csvRows.push('Date,Channel,Video Title,Watch Time,Category,Completion Rate');
+    
+    // Add data rows
+    if (data.detailedData && data.detailedData.length > 0) {
+      data.detailedData.forEach(item => {
+        const row = [
+          new Date(item.timestamp).toISOString().split('T')[0],
+          item.channelName || 'Unknown',
+          `"${(item.videoTitle || 'Unknown').replace(/"/g, '""')}"`,
+          item.watchTime || 0,
+          item.category || 'General',
+          item.completionRate || 0
+        ].join(',');
+        csvRows.push(row);
+      });
+    }
+    
+    return csvRows.join('\n');
   }
 }
 

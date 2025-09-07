@@ -22,7 +22,7 @@
   },
   
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https: data:; connect-src 'self' https://www.googleapis.com https://accounts.google.com https://www.youtube.com; object-src 'none'; frame-src 'none'; font-src 'self' data:; media-src 'none'; worker-src 'none'"
+    "extension_pages": "script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https://i.ytimg.com https://yt3.ggpht.com data:; connect-src 'self' https://www.googleapis.com https://accounts.google.com https://www.youtube.com; object-src 'none'; frame-src 'none'; font-src 'self' data:; media-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; upgrade-insecure-requests"
   },
   
   "host_permissions": [
@@ -61,9 +61,12 @@
     {
       "resources": [
         "src/pages/dashboard.html",
+        "src/pages/analytics.html",
+        "src/pages/analytics.js",
         "src/pages/storage-viewer.html",
         "src/pages/storage-viewer.js",
-        "src/utils/intelligence.js"
+        "src/utils/intelligence.js",
+        "src/utils/analytics-engine.js"
       ],
       "matches": [
         "https://www.youtube.com/*",

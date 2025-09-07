@@ -1,21 +1,31 @@
 document.addEventListener('DOMContentLoaded', async () => {
+  // Cache DOM elements for better performance - make global for reuse
+  window.popupElements = {
+    openDashboard: document.getElementById('openDashboard'),
+    openGhostProtocol: document.getElementById('openGhostProtocol'),
+    currentVideoContent: document.getElementById('currentVideoContent'),
+    currentVideoTitle: document.getElementById('currentVideoTitle'),
+    channelCount: document.getElementById('channelCount'),
+    approvedCount: document.getElementById('approvedCount')
+  };
+  
   await updateStats();
   await updateCurrentVideo();
   
-  document.getElementById('openDashboard').addEventListener('click', () => {
+  window.popupElements.openDashboard.addEventListener('click', () => {
     chrome.tabs.create({ url: chrome.runtime.getURL('src/pages/dashboard.html') });
   });
   
-  document.getElementById('openGhostProtocol').addEventListener('click', () => {
+  window.popupElements.openGhostProtocol.addEventListener('click', () => {
     chrome.tabs.create({ url: chrome.runtime.getURL('src/pages/ghost-dashboard.html?demo=true') });
   });
   
   // Add check button after dashboard button
-  const dashboardBtn = document.getElementById('openDashboard');
+  const dashboardBtn = window.popupElements.openDashboard;
   const buttonsContainer = dashboardBtn.parentElement;
   
   const checkButton = document.createElement('button');
-  checkButton.textContent = 'Check for New Videos';
+  checkButton.textContent = 'Check Now';
   checkButton.className = 'btn btn-check';
   
   checkButton.addEventListener('click', async () => {
@@ -49,8 +59,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
   
   // Insert after Ghost Protocol button
-  const ghostBtn = document.getElementById('openGhostProtocol');
+  const ghostBtn = window.popupElements.openGhostProtocol;
   buttonsContainer.insertBefore(checkButton, ghostBtn.nextSibling);
+  
+  // Add analytics button
+  const analyticsButton = document.createElement('button');
+  analyticsButton.textContent = 'Analytics';
+  analyticsButton.className = 'btn btn-analytics';
+  
+  analyticsButton.addEventListener('click', () => {
+    chrome.tabs.create({ url: chrome.runtime.getURL('src/pages/analytics.html') });
+  });
+  
+  // Insert after check button
+  buttonsContainer.insertBefore(analyticsButton, checkButton.nextSibling);
 });
 
 async function updateCurrentVideo() {
@@ -62,8 +84,8 @@ async function updateCurrentVideo() {
     const isYouTubeVideo = currentTab && currentTab.url && 
                           currentTab.url.includes('youtube.com/watch');
     
-    const contentDiv = document.getElementById('currentVideoContent');
-    const titleDiv = document.getElementById('currentVideoTitle');
+    const contentDiv = window.popupElements?.currentVideoContent || document.getElementById('currentVideoContent');
+    const titleDiv = window.popupElements?.currentVideoTitle || document.getElementById('currentVideoTitle');
     
     // Update the title and indicator based on status
     if (!isYouTube) {
@@ -161,8 +183,8 @@ async function updateCurrentVideo() {
     }
   } catch (error) {
     console.warn('YCN: Error updating current video:', error);
-    const contentDiv = document.getElementById('currentVideoContent');
-    const titleDiv = document.getElementById('currentVideoTitle');
+    const contentDiv = window.popupElements?.currentVideoContent || document.getElementById('currentVideoContent');
+    const titleDiv = window.popupElements?.currentVideoTitle || document.getElementById('currentVideoTitle');
     
     // Show offline/error state
     titleDiv.innerHTML = `
@@ -196,8 +218,11 @@ async function updateStats() {
       }
     }
     
-    document.getElementById('channelCount').textContent = channelCount;
-    document.getElementById('approvedCount').textContent = approvedCount;
+    const channelCountEl = window.popupElements?.channelCount || document.getElementById('channelCount');
+    const approvedCountEl = window.popupElements?.approvedCount || document.getElementById('approvedCount');
+    
+    channelCountEl.textContent = channelCount;
+    approvedCountEl.textContent = approvedCount;
     document.getElementById('readyCount').textContent = readyCount;
     
     const status = document.getElementById('status');

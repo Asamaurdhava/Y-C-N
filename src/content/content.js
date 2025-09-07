@@ -537,7 +537,7 @@
           lastUrl = currentUrl;
           this.detectPageChange();
         }
-      }, 1000);
+      }, 2000); // Optimized from 1s to 2s for better performance
     }
 
     detectPageChange() {
@@ -702,10 +702,20 @@
       this.totalSkips = 0;
       this.majorSkipsDetected = false;
       this.lastCheckTime = Date.now();
+      this.initialVideoTime = 0; // Store where user started watching
       
       const video = document.querySelector('video');
       if (video) {
+        // **ENHANCED: Start tracking from current video position, not 00:00**
+        this.initialVideoTime = video.currentTime; // Remember where user started watching
         this.lastVideoTime = video.currentTime;
+        this.currentSegmentStart = video.currentTime; // Start segment from current position
+        
+        const startPosition = video.currentTime;
+        const startPercentage = video.duration > 0 ? (startPosition / video.duration * 100) : 0;
+        
+        console.log(`YCN: Tracking initialized at ${startPosition.toFixed(1)}s (${startPercentage.toFixed(1)}%) - ${startPosition > 0 ? 'RESUMED VIDEO' : 'NEW VIDEO'}`);
+        
         this.setupVideoEventListeners(video);
       }
 
@@ -778,8 +788,9 @@
         seeked: () => {
           const seekDistance = Math.abs(video.currentTime - this.lastVideoTime);
           if (seekDistance > 2) {
-            console.log(`YCN: Manual seek detected - ${seekDistance.toFixed(1)}s jump`);
+            console.log(`YCN: User seek detected - ${seekDistance.toFixed(1)}s jump, continuing from cursor position: ${video.currentTime.toFixed(1)}s`);
             
+            // Save the current watching segment before the seek
             if (this.currentSegmentStart < this.lastVideoTime) {
               this.continuousSegments.push({
                 start: this.currentSegmentStart,
@@ -788,14 +799,13 @@
               });
             }
             
-            const seekPercentage = seekDistance / video.duration;
-            if (seekDistance > 120 || seekPercentage > 0.25) {
-              this.majorSkipsDetected = true;
-            } else if (seekDistance > 30) {
-              this.totalSkips++;
-            }
-            
+            // **NEW BEHAVIOR: Continue tracking from user-selected cursor position**
+            // Always resume tracking from where the user dropped the cursor, regardless of skip distance
             this.currentSegmentStart = video.currentTime;
+            
+            console.log(`YCN: Tracking resumed from user cursor position: ${video.currentTime.toFixed(1)}s (${(video.currentTime/video.duration*100).toFixed(1)}%)`);
+            
+            // Note: We remove skip penalty logic here - user intentionally selected this position
           }
           this.lastVideoTime = video.currentTime;
         },
@@ -818,6 +828,13 @@
     // ========== Progress Checking ==========
     checkProgress() {
       try {
+        // Stop checking if context is invalidated
+        if (this.messageHandler && !this.messageHandler.contextValid) {
+          console.log('YCN: Context invalidated, stopping progress checks');
+          this.stopTracking(false);
+          return;
+        }
+        
         const video = document.querySelector('video');
         if (!video || video.duration === 0) return;
 
@@ -831,48 +848,50 @@
         const skipThreshold = timeSinceLastCheck + 0.5;
         
         if (videoTimeAdvanced > skipThreshold && videoTimeAdvanced > 2) {
-          // Skip detected
-          const skipDuration = videoTimeAdvanced;
-          const skipPercentage = skipDuration / video.duration;
+          // Automatic skip detected (video jumped forward automatically)
+          const skipDuration = videoTimeAdvanced - timeSinceLastCheck;
           
-          if (this.currentSegmentStart < currentVideoTime - skipDuration) {
+          console.log(`YCN: Automatic skip detected - ${skipDuration.toFixed(1)}s jump, continuing from current position: ${currentVideoTime.toFixed(1)}s`);
+          
+          // Record the segment that was watched before the skip
+          if (this.currentSegmentStart < this.lastVideoTime) {
             this.continuousSegments.push({
               start: this.currentSegmentStart,
-              end: currentVideoTime - skipDuration,
-              duration: (currentVideoTime - skipDuration) - this.currentSegmentStart
+              end: this.lastVideoTime,
+              duration: this.lastVideoTime - this.currentSegmentStart
             });
           }
           
-          if (skipDuration > 120 || skipPercentage > 0.25) {
-            this.majorSkipsDetected = true;
-            console.log(`YCN: Major skip detected! ${skipDuration.toFixed(1)}s`);
-          } else if (skipDuration > 30) {
-            this.totalSkips++;
-            console.log(`YCN: Minor skip detected! ${skipDuration.toFixed(1)}s`);
-          }
-          
+          // **NEW BEHAVIOR: Continue tracking from current position after automatic skip**
+          // Resume tracking from where the video is now, regardless of skip distance
           this.currentSegmentStart = currentVideoTime;
+          
+          console.log(`YCN: Tracking resumed from position: ${currentVideoTime.toFixed(1)}s (${(currentVideoTime/video.duration*100).toFixed(1)}%)`);
+          
+          // Note: Removed skip penalty logic - now always continues from current position
           
         } else if (videoTimeAdvanced < -1) {
           // Rewind detected
           console.log('YCN: Rewind detected');
-          if (this.currentSegmentStart < currentVideoTime + 1) {
+          if (this.currentSegmentStart < this.lastVideoTime) {
             this.continuousSegments.push({
               start: this.currentSegmentStart,
-              end: currentVideoTime + 1,
-              duration: (currentVideoTime + 1) - this.currentSegmentStart
+              end: this.lastVideoTime,
+              duration: this.lastVideoTime - this.currentSegmentStart
             });
           }
           this.currentSegmentStart = currentVideoTime;
           
-        } else if (!video.paused) {
-          // Normal playback
+        } else if (!video.paused && videoTimeAdvanced > 0) {
+          // Normal playback - only add positive time advancement
           const timeWatched = Math.min(videoTimeAdvanced, timeSinceLastCheck);
-          this.actualWatchedTime += timeWatched;
+          if (timeWatched > 0) {
+            this.actualWatchedTime += timeWatched;
+          }
         }
         
         // Calculate engagement
-        const engagementScore = this.calculateEngagementScore(video.duration, currentProgress);
+        const engagementScore = this.calculateEngagementScore(video.duration);
         
         // Log status periodically
         if (this.actualWatchedTime > 0 && Math.floor(this.actualWatchedTime) % 15 === 0) {
@@ -905,22 +924,23 @@
       }
     }
 
-    calculateEngagementScore(videoDuration, currentProgress) {
-      const tempSegments = [...this.continuousSegments];
-      if (this.currentSegmentStart < this.lastVideoTime) {
-        tempSegments.push({
-          start: this.currentSegmentStart,
-          end: this.lastVideoTime,
-          duration: this.lastVideoTime - this.currentSegmentStart
-        });
+    calculateEngagementScore(videoDuration) {
+      // Use actualWatchedTime for engagement calculation
+      // This represents the total time the user has actively watched
+      const engagementScore = (this.actualWatchedTime / videoDuration) * 100;
+      
+      // **ENHANCED: Better logging for mid-video starts**
+      const startedMidVideo = this.initialVideoTime > 30; // Started more than 30s into video
+      const startPercentage = (this.initialVideoTime / videoDuration) * 100;
+      
+      if (startedMidVideo && this.actualWatchedTime > 0 && Math.floor(this.actualWatchedTime) % 30 === 0) {
+        console.log(`YCN: Mid-video tracking - Started at ${startPercentage.toFixed(1)}%, ` +
+                   `watched ${this.actualWatchedTime.toFixed(1)}s, ` +
+                   `engagement ${engagementScore.toFixed(1)}% of total video duration`);
       }
       
-      const totalContinuousTime = tempSegments.reduce((total, segment) => {
-        return total + Math.max(0, segment.duration);
-      }, 0);
-      
-      const engagementScore = (totalContinuousTime / videoDuration) * 100;
-      return Math.min(engagementScore, currentProgress * 100);
+      // Cap the engagement score at 100%
+      return Math.min(engagementScore, 100);
     }
 
     // ========== Communication ==========
@@ -971,8 +991,18 @@
         }
         
         // Check if already watched
-        const result = await this.storageManager.get('channels');
-        const channels = result.channels || {};
+        let channels = {};
+        try {
+          const result = await this.storageManager.get('channels');
+          channels = result.channels || {};
+        } catch (storageError) {
+          if (storageError.message?.includes('Extension context invalidated')) {
+            console.log('YCN: Extension was reloaded, stopping.');
+            this.stopTracking(false);
+            return;
+          }
+          throw storageError;
+        }
         
         if (channels[currentChannelId]?.watchedVideos?.includes(currentVideoId)) {
           console.log('YCN: Video already watched');
@@ -1010,7 +1040,37 @@
         }
 
       } catch (error) {
-        console.warn('YCN: Error recording video watch:', error);
+        // Handle extension context invalidated error
+        if (error.message?.includes('Extension context invalidated')) {
+          console.log('YCN: Extension was reloaded. Stopping tracking.');
+          // Clean up and stop tracking
+          this.stopTracking(false);
+          
+          // Optionally notify user to reload the page
+          const notification = document.createElement('div');
+          notification.textContent = 'YouTube Channel Notifier was updated. Please reload this page for tracking to continue.';
+          notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #ff4444;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-family: Roboto, sans-serif;
+            font-size: 14px;
+            z-index: 99999;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+          `;
+          notification.onclick = () => location.reload();
+          document.body.appendChild(notification);
+          
+          // Remove notification after 10 seconds
+          setTimeout(() => notification.remove(), 10000);
+        } else {
+          console.warn('YCN: Error recording video watch:', error);
+        }
       }
     }
 
@@ -1057,6 +1117,104 @@
         });
       } catch (error) {
         console.warn('YCN: Error requesting permission:', error);
+      }
+    }
+
+    // ========== Analytics Integration ==========
+    
+    getSessionAnalyticsData() {
+      if (!this.currentVideoId || !this.currentChannelId) {
+        return null;
+      }
+      
+      const video = document.querySelector('video');
+      if (!video) return null;
+      
+      return {
+        videoId: this.currentVideoId,
+        channelId: this.currentChannelId,
+        channelName: this.getChannelName(),
+        videoTitle: document.title.replace(' - YouTube', ''),
+        watchTime: this.actualWatchedTime || 0,
+        totalTime: video.duration || 0,
+        engagementScore: this.calculateEngagementScore(video.duration) || 0,
+        category: this.detectVideoCategory(),
+        timestamp: Date.now(),
+        deviceType: this.getDeviceType()
+      };
+    }
+    
+    getChannelName() {
+      const selectors = [
+        'ytd-video-owner-renderer .ytd-channel-name a',
+        '.ytd-channel-name a',
+        '#channel-name a',
+        '#owner-text a'
+      ];
+      
+      for (const selector of selectors) {
+        const element = document.querySelector(selector);
+        if (element && element.textContent) {
+          return element.textContent.trim();
+        }
+      }
+      
+      return 'Unknown Channel';
+    }
+    
+    detectVideoCategory() {
+      // Simple category detection based on video title and description
+      const title = document.title.toLowerCase();
+      const description = document.querySelector('#description')?.textContent?.toLowerCase() || '';
+      const combined = title + ' ' + description;
+      
+      // Define category keywords
+      const categories = {
+        'education': ['tutorial', 'how to', 'learn', 'course', 'lesson', 'guide', 'explained', 'education'],
+        'entertainment': ['funny', 'comedy', 'meme', 'reaction', 'prank', 'entertainment', 'fun'],
+        'gaming': ['gameplay', 'gaming', 'game', 'speedrun', 'walkthrough', 'review', 'let\'s play'],
+        'music': ['music', 'song', 'album', 'cover', 'remix', 'band', 'artist', 'concert'],
+        'technology': ['tech', 'review', 'unboxing', 'gadget', 'smartphone', 'laptop', 'software'],
+        'lifestyle': ['vlog', 'daily', 'morning', 'routine', 'lifestyle', 'day in my life'],
+        'news': ['news', 'breaking', 'update', 'politics', 'current events', 'report'],
+        'sports': ['sports', 'football', 'basketball', 'soccer', 'highlights', 'match', 'game'],
+        'cooking': ['recipe', 'cooking', 'food', 'kitchen', 'chef', 'baking', 'meal'],
+        'fitness': ['workout', 'fitness', 'exercise', 'gym', 'health', 'yoga', 'training']
+      };
+      
+      // Check which category has the most matches
+      let bestCategory = 'other';
+      let maxMatches = 0;
+      
+      for (const [category, keywords] of Object.entries(categories)) {
+        const matches = keywords.filter(keyword => combined.includes(keyword)).length;
+        if (matches > maxMatches) {
+          maxMatches = matches;
+          bestCategory = category;
+        }
+      }
+      
+      return bestCategory;
+    }
+    
+    getDeviceType() {
+      const userAgent = navigator.userAgent.toLowerCase();
+      if (/mobile|android|iphone/.test(userAgent)) return 'mobile';
+      if (/tablet|ipad/.test(userAgent)) return 'tablet';
+      return 'desktop';
+    }
+    
+    async sendAnalyticsData() {
+      try {
+        const sessionData = this.getSessionAnalyticsData();
+        if (!sessionData) return;
+        
+        await this.messageHandler.sendMessage({
+          type: 'ANALYTICS_SESSION_DATA',
+          sessionData: sessionData
+        });
+      } catch (error) {
+        console.warn('YCN Analytics: Error sending session data:', error);
       }
     }
 

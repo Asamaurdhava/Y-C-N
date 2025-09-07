@@ -1064,13 +1064,15 @@ body {
 }
 
 .secondary-btn {
-  background: #8b5cf6;
+  background: linear-gradient(135deg, var(--slate-600), var(--slate-700));
   color: white;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .secondary-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(139, 92, 246, 0.3);
+  background: linear-gradient(135deg, var(--slate-700), var(--slate-800));
+  box-shadow: 0 4px 8px rgba(71, 85, 105, 0.3);
 }
 
 .danger-btn {
@@ -1081,6 +1083,16 @@ body {
 .danger-btn:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+.btn-analytics {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.btn-analytics:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
 }
 
 /* Permission Modal */

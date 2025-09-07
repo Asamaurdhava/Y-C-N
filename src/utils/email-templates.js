@@ -256,10 +256,10 @@ class EmailTemplates {
     const topChannel = this.getMostFrequentChannel(videos);
     
     const subjects = {
-      instant: `🔴 New: "${videos[0].title}" from ${videos[0].channelName}`,
+      instant: `🔴 New: "${this.escapeHtml(videos[0].title)}" from ${this.escapeHtml(videos[0].channelName)}`,
       daily: `📺 Your Evening Watch List: ${videos.length} new videos from ${channelCount} channel${channelCount > 1 ? 's' : ''}`,
       weekend: `🎬 Weekend Binge Alert: ${videos.length} videos ready to watch!`,
-      digest: `🌙 Tonight's YouTube: New from ${topChannel} ${channelCount > 1 ? `and ${channelCount - 1} more` : ''}`
+      digest: `🌙 Tonight's YouTube: New from ${this.escapeHtml(topChannel)} ${channelCount > 1 ? `and ${channelCount - 1} more` : ''}`
     };
     
     return subjects[type] || subjects.daily;
@@ -347,6 +347,15 @@ class EmailTemplates {
     };
     return text.replace(/[&<>"']/g, m => map[m]);
   }
+  
+  /**
+   * Sanitize YouTube video IDs
+   */
+  sanitizeVideoId(videoId) {
+    if (!videoId) return '';
+    // YouTube video IDs are alphanumeric, underscore, and hyphen only
+    return videoId.replace(/[^a-zA-Z0-9_-]/g, '');
+  }
 
   /**
    * Generate plain text version for accessibility
@@ -358,9 +367,9 @@ class EmailTemplates {
     text += `You have ${videos.length} new video${videos.length > 1 ? 's' : ''}:\n\n`;
     
     videos.forEach((video, index) => {
-      text += `${index + 1}. ${video.title}\n`;
-      text += `   Channel: ${video.channelName}\n`;
-      text += `   Watch: https://www.youtube.com/watch?v=${video.videoId}\n\n`;
+      text += `${index + 1}. ${this.escapeHtml(video.title)}\n`;
+      text += `   Channel: ${this.escapeHtml(video.channelName)}\n`;
+      text += `   Watch: https://www.youtube.com/watch?v=${this.sanitizeVideoId(video.videoId)}\n\n`;
     });
     
     text += `\n---\nManage preferences: ${this.getUnsubscribeLink(user)}`;

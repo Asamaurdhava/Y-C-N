@@ -1,8 +1,17 @@
+// Import encryption utilities
+try {
+  importScripts('../utils/encryption.js');
+} catch (error) {
+  console.error('Failed to load encryption utilities:', error);
+}
+
 class GhostProtocolAuth {
   constructor() {
     this.tokenCache = null;
     this.emailHashCache = null;
     this.salt = this.generateCryptoSalt();
+    this.secureStorage = new SecureTokenStorage();
+    this.rateLimiter = new Map();
   }
 
   generateCryptoSalt() {
@@ -90,18 +99,18 @@ class GhostProtocolAuth {
     // const secureStorage = new SecureTokenStorage();
     // await secureStorage.storeToken('gmail_access', token);
     
+    // Store tokens securely using encryption
+    await this.secureStorage.storeToken('gmail_access', token);
+    
     const ghostUser = {
       emailHash: hashedEmail,
-      // SECURITY NOTE: email field should be removed in production
-      email: userInfo.email, // Store email temporarily for Gmail API
       domain: userInfo.email.split('@')[1],
       verified: userInfo.verified_email || false,
       locale: userInfo.locale || 'en',
       authTimestamp: Date.now(),
-      // SECURITY WARNING: Token stored in plaintext - use encryption in production
-      accessToken: token, // Store token for Gmail API
-      ghostProtocolVersion: '1.0.0',
-      browserInfo: this.getBrowserInfo()
+      ghostProtocolVersion: '1.0.1',
+      browserInfo: this.getBrowserInfo(),
+      secureTokensStored: true // Indicator that tokens are encrypted
     };
 
     await chrome.storage.local.set({
@@ -590,16 +599,20 @@ class EmailNotificationService {
         const result = await chrome.storage.local.get(['ghostUser']);
         console.log('YCN Email Service: Checking for Ghost Protocol token:', !!result.ghostUser);
         
-        if (result.ghostUser && result.ghostUser.accessToken) {
-          console.log('YCN Email Service: Found stored token');
+        if (result.ghostUser && result.ghostUser.secureTokensStored) {
+          console.log('YCN Email Service: Found secure token storage');
           
-          // Validate token before using it
-          const isValid = await this.validateToken(result.ghostUser.accessToken);
-          if (isValid) {
-            console.log('YCN Email Service: Stored token is valid, using it');
-            return result.ghostUser.accessToken;
-          } else {
-            console.log('YCN Email Service: Stored token is invalid, will refresh');
+          // Get token from secure storage
+          const token = await this.secureStorage.getToken('gmail_access');
+          if (token) {
+            // Validate token before using it
+            const isValid = await this.validateToken(token);
+            if (isValid) {
+              console.log('YCN Email Service: Stored token is valid, using it');
+              return token;
+            } else {
+              console.log('YCN Email Service: Stored token is invalid, will refresh');
+            }
           }
         }
       }
@@ -677,11 +690,16 @@ class EmailNotificationService {
   
   async updateStoredToken(newToken) {
     try {
+      // Store new token securely
+      await this.secureStorage.storeToken('gmail_access', newToken);
+      
+      // Update user data to indicate secure storage
       const result = await chrome.storage.local.get(['ghostUser']);
       if (result.ghostUser) {
-        result.ghostUser.accessToken = newToken;
+        result.ghostUser.secureTokensStored = true;
+        delete result.ghostUser.accessToken; // Remove any old plaintext token
         await chrome.storage.local.set({ ghostUser: result.ghostUser });
-        console.log('YCN Email Service: Updated stored token');
+        console.log('YCN Email Service: Updated stored token securely');
       }
     } catch (error) {
       console.error('YCN Email Service: Error updating stored token:', error);
@@ -790,8 +808,43 @@ class EmailNotificationService {
     }
   }
   
+  // Rate limiting for API calls
+  async checkRateLimit(endpoint) {
+    const now = Date.now();
+    const key = endpoint;
+    const limit = this.rateLimiter.get(key) || { count: 0, resetTime: now + 60000 };
+    
+    if (now > limit.resetTime) {
+      limit.count = 0;
+      limit.resetTime = now + 60000;
+    }
+    
+    if (limit.count >= 10) { // Max 10 requests per minute
+      throw new Error('Rate limit exceeded for ' + endpoint);
+    }
+    
+    limit.count++;
+    this.rateLimiter.set(key, limit);
+  }
+
+  async validateToken(token) {
+    try {
+      if (!token) return false;
+      
+      // Check rate limiting
+      await this.checkRateLimit('tokeninfo');
+      
+      const response = await fetch(`https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${token}`);
+      return response.ok;
+    } catch (error) {
+      console.error('Token validation failed:', error);
+      return false;
+    }
+  }
+
   async checkTokenScopes(token) {
     try {
+      await this.checkRateLimit('tokeninfo');
       const response = await fetch(`https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${token}`);
       if (response.ok) {
         const tokenInfo = await response.json();
